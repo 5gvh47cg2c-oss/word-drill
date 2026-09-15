@@ -313,6 +313,7 @@ header .streak b{ color: var(--amber); font-weight:700; }
 .word-row .en{ font-family:Georgia, 'Hiragino Mincho ProN', serif; font-style:italic; font-weight:600; font-size:16px; }
 .word-row .ja{ font-size:13px; color: rgba(251,248,242,0.65); margin-top:2px; display:none; }
 .word-row .ja.show{ display:block; }
+.word-row .source{ font-size:11px; color: rgba(251,248,242,0.4); margin-top:2px; }
 .word-row.tappable{ cursor:pointer; }
 .word-row .badge{
   font-size:11px; padding:3px 8px; border-radius:10px; background: rgba(226,166,20,0.15); color: var(--amber); flex-shrink:0;
@@ -514,6 +515,10 @@ nav button.active{ color: var(--amber); }
       <label>意味（必須）</label>
       <input type="text" id="inJa" placeholder="例: 忍耐、根気">
     </div>
+    <div class="form-group">
+      <label>出典・メモ（任意）</label>
+      <input type="text" id="inSource" placeholder="例: 2026慶應(商)①">
+    </div>
     <button class="save-btn" onclick="submitAddWord()">単語帳に追加する</button>
     <div class="form-error" id="formError"></div>
   </section>
@@ -538,16 +543,8 @@ nav button.active{ color: var(--amber); }
 const STORAGE_KEY = "word-drill-progress-v3";
 const hasCloudStorage = (typeof window.storage !== "undefined") && window.storage && typeof window.storage.get === "function";
 
-const STARTER_WORDS = [
-  {id:"s1", en:"accomplish", ph:"əˈkɑːmplɪʃ", ja:"〜を成し遂げる", ex:"She accomplished the task ahead of schedule.", exja:"彼女は予定より早くその仕事を成し遂げた。"},
-  {id:"s2", en:"anxious", ph:"ˈæŋkʃəs", ja:"不安な、心配な", ex:"She felt anxious before the exam.", exja:"彼女は試験の前に不安を感じた。"},
-  {id:"s3", en:"convince", ph:"kənˈvɪns", ja:"〜を納得させる", ex:"I couldn't convince him to stay.", exja:"彼を説得して残らせることはできなかった。"},
-  {id:"s4", en:"crucial", ph:"ˈkruːʃl", ja:"極めて重要な", ex:"Sleep is crucial for good health.", exja:"睡眠は健康にとって極めて重要だ。"},
-  {id:"s5", en:"reluctant", ph:"rɪˈlʌktənt", ja:"気が進まない", ex:"He was reluctant to admit his mistake.", exja:"彼は自分の間違いを認めるのに気が進まなかった。"}
-];
-
 let state = {
-  words: STARTER_WORDS.slice(),
+  words: [],
   learned: {},
   wrong: {},
   review: {},
@@ -599,7 +596,7 @@ async function loadState(){
     try{
       const parsed = JSON.parse(raw);
       state = Object.assign(state, parsed);
-      if(!Array.isArray(state.words)) state.words = STARTER_WORDS.slice();
+      if(!Array.isArray(state.words)) state.words = [];
     }catch(e){ /* corrupt, keep defaults */ }
   }
   renderHome();
@@ -666,6 +663,7 @@ function showScreen(name){
   if(name === "add"){
     document.getElementById("inEn").value = "";
     document.getElementById("inJa").value = "";
+    document.getElementById("inSource").value = "";
     document.getElementById("formError").textContent = "";
   }
 }
@@ -814,12 +812,14 @@ function renderList(){
     let badgeHtml = "";
     if(isWeak) badgeHtml = '<div class="badge">苦手</div>';
     else if(isMastered) badgeHtml = '<div class="badge mastered">習得</div>';
+    const sourceHtml = w.source ? `<div class="source">${escapeHtml(w.source)}</div>` : "";
     const row = document.createElement("div");
     row.className = "word-row tappable";
     row.innerHTML = `
       <div class="info">
         <div class="en">${escapeHtml(w.en)}</div>
         <div class="ja">${escapeHtml(w.ja)}</div>
+        ${sourceHtml}
       </div>
       ${badgeHtml}
       <div class="row-actions">
@@ -923,11 +923,12 @@ function submitAddWord(){
   errorEl.textContent = "";
   const en = document.getElementById("inEn").value.trim();
   const ja = document.getElementById("inJa").value.trim();
+  const source = document.getElementById("inSource").value.trim();
   if(!en || !ja){
     errorEl.textContent = "英単語と意味は必須です。";
     return;
   }
-  state.words.push({ id: genId(), en, ja, ph: "", ex: "", exja: "" });
+  state.words.push({ id: genId(), en, ja, ph: "", ex: "", exja: "", source });
   saveState();
   showScreen("list");
 }
