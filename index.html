@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="単語ドリル">
+<meta name="theme-color" content="#1B2340">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%231B2340'/%3E%3Ctext x='90' y='112' font-family='Georgia,serif' font-style='italic' font-weight='700' font-size='84' fill='%23E2A614' text-anchor='middle'%3EW%3C/text%3E%3C/svg%3E">
+<title>単語ドリル</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@500;700&family=Source+Serif+4:ital,wght@0,600;0,700;1,600&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+:root{
+  --ink:#1B2340;
+  --ink-soft:#3B4266;
+  --paper:#FBF8F2;
+  --paper-dim:#EFEAE0;
+  --amber:#E2A614;
+  --amber-deep:#B8860F;
+  --good:#3E8E5C;
+  --bad:#C85A46;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background: var(--ink);
+  font-family:'Noto Sans JP', sans-serif;
+  color: var(--paper);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+}
+
+#app{
+  width:100%;
+  max-width:460px;
+  min-height:100vh;
+  background:
+    radial-gradient(circle at 15% 8%, rgba(226,166,20,0.10), transparent 40%),
+    var(--ink);
+  display:flex;
+  flex-direction:column;
+  position:relative;
+  padding-bottom:78px;
+}
+
+header{
+  padding: calc(22px + env(safe-area-inset-top)) 20px 14px;
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+}
+header .brand{
+  font-family:'Zen Old Mincho', serif;
+  font-size:22px;
+  font-weight:700;
+  letter-spacing:.02em;
+  color: var(--paper);
+}
+header .brand span{ color: var(--amber); }
+header .streak{
+  font-size:12.5px;
+  color: rgba(251,248,242,0.65);
+}
+header .streak b{ color: var(--amber); font-weight:700; }
+
+.screen{ display:none; padding: 4px 20px 20px; flex:1; }
+.screen.active{ display:flex; flex-direction:column; }
+
+#home .lead{
+  font-family:'Zen Old Mincho', serif;
+  font-size:19px;
+  line-height:1.7;
+  margin: 6px 0 20px;
+  color: var(--paper);
+}
+.stat-row{ display:flex; gap:10px; margin-bottom:22px; }
+.stat-box{
+  flex:1;
+  background: rgba(251,248,242,0.05);
+  border:1px solid rgba(251,248,242,0.12);
+  border-radius:4px;
+  padding:14px 12px;
+}
+.stat-box .num{
+  font-family:'Source Serif 4', serif;
+  font-size:26px;
+  font-weight:700;
+  color: var(--amber);
+  line-height:1;
+}
+.stat-box .label{
+  font-size:11.5px;
+  color: rgba(251,248,242,0.6);
+  margin-top:6px;
+}
+
+.menu-card{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  background: var(--paper);
+  color: var(--ink);
+  border-radius:6px;
+  padding:16px 16px;
+  margin-bottom:12px;
+  cursor:pointer;
+  border:1px solid rgba(0,0,0,0.04);
+  text-align:left;
+}
+.menu-card.disabled{ opacity:0.45; pointer-events:none; }
+.menu-card .icon{
+  width:40px; height:40px;
+  border-radius:50%;
+  background: var(--paper-dim);
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px;
+  flex-shrink:0;
+}
+.menu-card .icon.amber{ background: var(--amber); color:var(--ink); }
+.menu-card .icon.good{ background: rgba(62,142,92,0.15); color:var(--good); }
+.menu-card .body{ flex:1; }
+.menu-card .title{ font-weight:700; font-size:15.5px; }
+.menu-card .desc{ font-size:12.5px; color: var(--ink-soft); margin-top:2px; }
+.menu-card .count{
+  font-family:'Source Serif 4', serif;
+  font-size:20px; font-weight:700; color: var(--ink);
+}
+.menu-card:active{ transform: scale(0.98); }
+
+.empty-hint{
+  background: rgba(226,166,20,0.08);
+  border:1px solid rgba(226,166,20,0.3);
+  border-radius:8px;
+  padding:16px;
+  margin-bottom:18px;
+  font-size:13.5px;
+  line-height:1.7;
+  color: rgba(251,248,242,0.85);
+}
+.empty-hint button{
+  margin-top:10px;
+  background: var(--amber);
+  color: var(--ink);
+  border:none;
+  padding:10px 18px;
+  border-radius:6px;
+  font-weight:700;
+  font-size:13.5px;
+  cursor:pointer;
+}
+
+.progress-bar{
+  height:4px; background: rgba(251,248,242,0.12); border-radius:2px; overflow:hidden; margin-bottom:22px;
+}
+.progress-bar-fill{ height:100%; background: var(--amber); transition: width .3s ease; }
+
+.card{
+  background: var(--paper);
+  color: var(--ink);
+  border-radius:10px;
+  padding:34px 22px;
+  text-align:center;
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  min-height:200px;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+  position:relative;
+  cursor:pointer;
+  border:2px solid transparent;
+}
+.card.revealed{ cursor:default; }
+.card.correct{ border-color: var(--good); }
+.card.wrong{ border-color: var(--bad); }
+.card .tag{
+  position:absolute; top:16px; left:18px;
+  font-size:11px; letter-spacing:.06em; color: var(--ink-soft); opacity:.55;
+}
+.card .speak-btn{
+  position:absolute; top:12px; right:14px;
+  width:34px; height:34px;
+  border-radius:50%;
+  border:none;
+  background: var(--paper-dim);
+  font-size:16px;
+  cursor:pointer;
+}
+.card .word{
+  font-family:'Source Serif 4', serif;
+  font-style:italic;
+  font-weight:700;
+  font-size:36px;
+  line-height:1.2;
+  word-break:break-word;
+}
+.card .phonetic{
+  margin-top:8px;
+  font-size:13px;
+  color: var(--ink-soft);
+}
+.card .phonetic .stress{ color: var(--amber-deep); font-weight:700; }
+.card .meaning{
+  margin-top:16px;
+  font-size:18px;
+  font-weight:700;
+  color: var(--ink);
+  display:none;
+}
+.card .meaning.show{ display:block; }
+.card .tap-hint{
+  margin-top:14px;
+  font-size:11.5px;
+  color: rgba(27,35,64,0.35);
+}
+
+.flash-actions{ display:flex; gap:10px; margin-top:20px; }
+.flash-btn{
+  flex:1;
+  padding:16px 10px;
+  border-radius:6px;
+  border:none;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
+  font-family:'Noto Sans JP', sans-serif;
+}
+.flash-btn.know{ background: var(--good); color:#fff; }
+.flash-btn.dontknow{ background: var(--bad); color:#fff; }
+.flash-btn:disabled{ opacity:.5; pointer-events:none; }
+
+.example-box{
+  margin-top:18px;
+  padding:12px 14px;
+  border-left:3px solid var(--amber);
+  background: rgba(226,166,20,0.06);
+  border-radius: 0 6px 6px 0;
+  font-size:13px;
+  line-height:1.6;
+  display:none;
+}
+.example-box.show{ display:block; }
+.example-box .en{ font-style:italic; color: rgba(251,248,242,0.9); }
+.example-box .ja{ color: rgba(251,248,242,0.6); margin-top:4px; }
+
+.next-btn{
+  margin-top:16px;
+  padding:14px;
+  border-radius:6px;
+  border:none;
+  background: var(--amber);
+  color: var(--ink);
+  font-weight:700;
+  font-size:15px;
+  cursor:pointer;
+  display:none;
+}
+.next-btn.show{ display:block; }
+
+.result-wrap{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+.result-wrap .big{
+  font-family:'Source Serif 4', serif;
+  font-size:54px; font-weight:700; color: var(--amber);
+}
+.result-wrap .sub{ font-size:14px; color: rgba(251,248,242,0.65); margin-top:6px; }
+.result-wrap .msg{
+  font-family:'Zen Old Mincho', serif;
+  font-size:17px; margin-top:22px; line-height:1.7;
+}
+.primary-btn{
+  margin-top:26px;
+  padding:14px 30px;
+  border-radius:6px;
+  border:none;
+  background: var(--amber);
+  color: var(--ink);
+  font-weight:700;
+  font-size:15px;
+  cursor:pointer;
+}
+.ghost-btn{
+  margin-top:12px;
+  padding:12px 26px;
+  border-radius:6px;
+  border:1px solid rgba(251,248,242,0.25);
+  background:transparent;
+  color: var(--paper);
+  font-size:14px;
+  cursor:pointer;
+}
+
+.list-header{ display:flex; align-items:center; gap:10px; margin:10px 0 16px; }
+.back-btn{
+  background:none; border:none; color: var(--paper); font-size:20px; cursor:pointer; padding:4px 6px 4px 0;
+}
+.list-title{ font-family:'Zen Old Mincho', serif; font-size:18px; font-weight:700; flex:1; }
+.add-fab{
+  background: var(--amber); color: var(--ink); border:none; border-radius:6px;
+  padding:8px 14px; font-size:13px; font-weight:700; cursor:pointer;
+}
+
+.word-row{
+  display:flex; align-items:center; gap:10px;
+  background: rgba(251,248,242,0.05);
+  border:1px solid rgba(251,248,242,0.1);
+  border-radius:6px;
+  padding:13px 15px;
+  margin-bottom:8px;
+}
+.word-row .info{ flex:1; min-width:0; }
+.word-row .en{ font-family:'Source Serif 4', serif; font-style:italic; font-weight:600; font-size:16px; }
+.word-row .ja{ font-size:13px; color: rgba(251,248,242,0.65); margin-top:2px; display:none; }
+.word-row .ja.show{ display:block; }
+.word-row.tappable{ cursor:pointer; }
+.word-row .badge{
+  font-size:11px; padding:3px 8px; border-radius:10px; background: rgba(226,166,20,0.15); color: var(--amber); flex-shrink:0;
+}
+.word-row .badge.mastered{ background: rgba(62,142,92,0.18); color: var(--good); }
+.row-actions{ display:flex; gap:6px; flex-shrink:0; }
+.icon-btn{
+  width:32px; height:32px; border-radius:50%; border:none;
+  background: rgba(251,248,242,0.1); color: var(--paper);
+  font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.icon-btn.danger{ background: rgba(200,90,70,0.18); color:#e88; }
+.icon-btn.success{ background: rgba(62,142,92,0.18); color:#8cd8a8; }
+
+.empty-note{
+  text-align:center; color: rgba(251,248,242,0.5); font-size:13.5px; margin-top:40px; line-height:1.8;
+}
+
+.form-group{ margin-bottom:16px; }
+.form-group label{ display:block; font-size:12px; color: rgba(251,248,242,0.55); margin-bottom:6px; }
+.form-row{ display:flex; gap:8px; align-items:center; }
+.form-row input{ flex:1; }
+input[type=text], textarea{
+  width:100%;
+  padding:12px 14px;
+  border-radius:6px;
+  border:1px solid rgba(251,248,242,0.2);
+  background: rgba(251,248,242,0.06);
+  color: var(--paper);
+  font-size:15px;
+  font-family:'Noto Sans JP', sans-serif;
+}
+textarea{ resize:vertical; min-height:56px; }
+input::placeholder, textarea::placeholder{ color: rgba(251,248,242,0.3); }
+.gen-btn{
+  width:100%;
+  padding:13px;
+  border-radius:6px;
+  border:1px solid rgba(226,166,20,0.4);
+  background: rgba(226,166,20,0.12);
+  color: var(--amber);
+  font-weight:700;
+  font-size:14.5px;
+  cursor:pointer;
+}
+.gen-btn:disabled{ opacity:.5; }
+.save-btn{
+  margin-top:6px;
+  padding:14px;
+  border-radius:6px;
+  border:none;
+  background: var(--amber);
+  color: var(--ink);
+  font-weight:700;
+  font-size:15px;
+  cursor:pointer;
+}
+.form-error{ font-size:12.5px; color:#ff9d8a; margin-top:8px; min-height:1em; }
+
+nav{
+  position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+  width:100%; max-width:460px;
+  background: rgba(27,35,64,0.92);
+  backdrop-filter: blur(6px);
+  border-top:1px solid rgba(251,248,242,0.1);
+  display:flex;
+}
+nav button{
+  flex:1; background:none; border:none; color: rgba(251,248,242,0.5);
+  padding:12px 4px calc(10px + env(safe-area-inset-bottom)); font-size:11px; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  font-family:'Noto Sans JP', sans-serif;
+}
+nav button .ic{ font-size:18px; }
+nav button.active{ color: var(--amber); }
+
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(10,12,24,0.6);
+  display:none; align-items:center; justify-content:center; z-index:80; padding:24px;
+}
+.modal-overlay.show{ display:flex; }
+.modal-box{
+  background: var(--paper); color: var(--ink);
+  border-radius:12px; padding:24px 20px; max-width:320px; width:100%; text-align:center;
+}
+.modal-box .modal-msg{ font-size:15px; line-height:1.7; margin-bottom:20px; }
+.modal-actions{ display:flex; gap:10px; }
+.modal-actions button{
+  flex:1; padding:12px; border-radius:6px; border:none; font-size:14px; font-weight:700; cursor:pointer;
+  font-family:'Noto Sans JP', sans-serif;
+}
+.modal-actions .cancel{ background: var(--paper-dim); color: var(--ink); }
+.modal-actions .confirm{ background: var(--bad); color:#fff; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <div class="brand">単語<span>ドリル</span></div>
+  </header>
+
+  <!-- HOME -->
+  <section class="screen active" id="home">
+    <div class="lead">今日も5問、コツコツ積み上げよう。</div>
+
+    <div class="empty-hint" id="emptyHint" style="display:none;">
+      収録単語がまだありません。覚えたい英単語を自分で登録するところから始めよう。
+      <br><button onclick="showScreen('add')">最初の単語を追加する</button>
+    </div>
+
+    <div class="menu-card" id="dailyCard" onclick="startQuiz('daily')">
+      <div class="icon amber">5</div>
+      <div class="body"><div class="title">今日の5問</div><div class="desc">タップして答えを確認しながら進める</div></div>
+      <div class="count">›</div>
+    </div>
+    <div class="menu-card" id="spacedCard" onclick="startQuiz('spaced')">
+      <div class="icon amber">⏰</div>
+      <div class="body"><div class="title">忘却曲線復習</div><div class="desc">今日復習すべき単語を自動で出題</div></div>
+      <div class="count" id="spacedCount">0</div>
+    </div>
+    <div class="menu-card" id="allCard" onclick="startQuiz('all')">
+      <div class="icon">⟳</div>
+      <div class="body"><div class="title">通しクイズ</div><div class="desc">登録した単語を全問</div></div>
+      <div class="count" id="allCount">–</div>
+    </div>
+    <div class="menu-card" onclick="startQuiz('weak')" id="weakQuizCard">
+      <div class="icon amber">!</div>
+      <div class="body"><div class="title">苦手単語クイズ</div><div class="desc">苦手な単語だけを今すぐ集中復習</div></div>
+      <div class="count" id="weakQuizCount">0</div>
+    </div>
+    <div class="menu-card" onclick="showScreen('weakList')">
+      <div class="icon good">✓</div>
+      <div class="body"><div class="title">苦手単語を管理</div><div class="desc">覚えた単語をリストから外す</div></div>
+      <div class="count" id="weakCount">0</div>
+    </div>
+    <div class="menu-card" onclick="showScreen('add')">
+      <div class="icon amber">+</div>
+      <div class="body"><div class="title">単語を追加</div><div class="desc">覚えたい単語を自分で登録</div></div>
+      <div class="count">›</div>
+    </div>
+    <div class="menu-card" onclick="showScreen('list')">
+      <div class="icon">📖</div>
+      <div class="body"><div class="title">単語帳を見る</div><div class="desc">登録した単語を一覧で確認</div></div>
+      <div class="count">›</div>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="screen" id="quiz">
+    <div class="progress-bar"><div class="progress-bar-fill" id="progFill"></div></div>
+    <div class="card" id="quizCard">
+      <div class="tag" id="quizTag">Q1</div>
+      <button class="speak-btn" onclick="event.stopPropagation(); speakCurrent()">🔊</button>
+      <div class="word" id="quizWord">word</div>
+      <div class="phonetic" id="quizPhonetic"></div>
+      <div class="meaning" id="quizMeaning"></div>
+      <div class="tap-hint" id="tapHint">タップして答えを見る</div>
+    </div>
+    <div class="choices" id="choices"></div>
+    <div class="example-box" id="exampleBox">
+      <div class="en" id="exEn"></div>
+      <div class="ja" id="exJa"></div>
+    </div>
+    <button class="next-btn" id="nextBtn" onclick="nextQuestion()">次へ</button>
+  </section>
+
+  <!-- RESULT -->
+  <section class="screen" id="result">
+    <div class="result-wrap">
+      <div class="big" id="resultScore">0/0</div>
+      <div class="sub">正解</div>
+      <div class="msg" id="resultMsg">お疲れさま。</div>
+      <button class="primary-btn" onclick="showScreen('home')">ホームに戻る</button>
+    </div>
+  </section>
+
+  <!-- WORD LIST -->
+  <section class="screen" id="list">
+    <div class="list-header">
+      <button class="back-btn" onclick="showScreen('home')">←</button>
+      <div class="list-title">単語帳（全<span id="listTotal"></span>語）</div>
+      <button class="add-fab" onclick="showScreen('add')">+ 追加</button>
+    </div>
+    <div id="listBody"></div>
+  </section>
+
+  <!-- WEAK LIST -->
+  <section class="screen" id="weakList">
+    <div class="list-header">
+      <button class="back-btn" onclick="showScreen('home')">←</button>
+      <div class="list-title">苦手単語（<span id="weakTotal"></span>語）</div>
+    </div>
+    <div id="weakBody"></div>
+  </section>
+
+  <!-- ADD WORD -->
+  <section class="screen" id="add">
+    <div class="list-header">
+      <button class="back-btn" onclick="showScreen('home')">←</button>
+      <div class="list-title">単語を追加</div>
+    </div>
+    <div class="form-group">
+      <label>英単語（必須）</label>
+      <div class="form-row">
+        <input type="text" id="inEn" placeholder="例: perseverance">
+        <button class="icon-btn" onclick="speak(document.getElementById('inEn').value)">🔊</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>意味（必須）</label>
+      <input type="text" id="inJa" placeholder="例: 忍耐、根気">
+    </div>
+    <div class="form-group">
+      <button class="gen-btn" id="genBtn">🪄 発音・例文を自動生成</button>
+      <div id="phStatus" style="font-size:11.5px;color:rgba(251,248,242,0.5);margin-top:8px;"></div>
+    </div>
+    <div class="form-group">
+      <label>発音記号・アクセント位置（自動生成／手で編集も可）</label>
+      <input type="text" id="inPh" placeholder="自動生成されます">
+    </div>
+    <div class="form-group">
+      <label>例文（自動生成／手で編集も可）</label>
+      <textarea id="inEx" placeholder="自動生成されます"></textarea>
+    </div>
+    <div class="form-group">
+      <label>例文の訳（自動生成／手で編集も可）</label>
+      <textarea id="inExJa" placeholder="自動生成されます"></textarea>
+    </div>
+    <button class="save-btn" onclick="submitAddWord()">単語帳に追加する</button>
+    <div class="form-error" id="formError"></div>
+  </section>
+
+  <nav>
+    <button class="active" data-nav="home" onclick="showScreen('home')"><span class="ic">🏠</span>ホーム</button>
+    <button data-nav="list" onclick="showScreen('list')"><span class="ic">📖</span>単語帳</button>
+  </nav>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box">
+      <div class="modal-msg" id="modalMsg"></div>
+      <div class="modal-actions">
+        <button class="cancel" id="modalCancelBtn">キャンセル</button>
+        <button class="confirm" id="modalConfirmBtn">削除する</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = "word-drill-progress-v3";
+const hasCloudStorage = (typeof window.storage !== "undefined") && window.storage && typeof window.storage.get === "function";
+
+const STARTER_WORDS = [
+  {id:"s1", en:"accomplish", ph:"əˈkɑːmplɪʃ", ja:"〜を成し遂げる", ex:"She accomplished the task ahead of schedule.", exja:"彼女は予定より早くその仕事を成し遂げた。"},
+  {id:"s2", en:"anxious", ph:"ˈæŋkʃəs", ja:"不安な、心配な", ex:"She felt anxious before the exam.", exja:"彼女は試験の前に不安を感じた。"},
+  {id:"s3", en:"convince", ph:"kənˈvɪns", ja:"〜を納得させる", ex:"I couldn't convince him to stay.", exja:"彼を説得して残らせることはできなかった。"},
+  {id:"s4", en:"crucial", ph:"ˈkruːʃl", ja:"極めて重要な", ex:"Sleep is crucial for good health.", exja:"睡眠は健康にとって極めて重要だ。"},
+  {id:"s5", en:"reluctant", ph:"rɪˈlʌktənt", ja:"気が進まない", ex:"He was reluctant to admit his mistake.", exja:"彼は自分の間違いを認めるのに気が進まなかった。"}
+];
+
+let state = {
+  words: STARTER_WORDS.slice(),
+  learned: {},
+  wrong: {},
+  review: {},
+  totalCorrect: 0,
+  totalAnswered: 0,
+  lastStudyDate: null,
+  streak: 0
+};
+
+const REVIEW_INTERVALS = [1, 3, 7, 14, 30, 75];
+
+function isDueForReview(id){
+  const r = state.review[id];
+  if(!r) return true;
+  return r.nextDate <= todayStr();
+}
+
+function scheduleNextReview(id, isCorrect){
+  if(!state.review) state.review = {};
+  const current = state.review[id] || { stage: -1 };
+  const stage = isCorrect ? Math.min(current.stage + 1, REVIEW_INTERVALS.length - 1) : 0;
+  const days = REVIEW_INTERVALS[stage];
+  const next = new Date();
+  next.setDate(next.getDate() + days);
+  state.review[id] = { stage, nextDate: next.toISOString().slice(0,10) };
+}
+
+let session = { queue: [], idx: 0, correctCount: 0, mode: "daily", answered: false, revealed: false };
+
+async function storageGet(key){
+  if(hasCloudStorage){
+    try{ const res = await window.storage.get(key, false); return res ? res.value : null; }
+    catch(e){ return null; }
+  } else {
+    try{ return localStorage.getItem(key); } catch(e){ return null; }
+  }
+}
+async function storageSet(key, value){
+  if(hasCloudStorage){
+    try{ await window.storage.set(key, value, false); } catch(e){ /* ignore */ }
+  } else {
+    try{ localStorage.setItem(key, value); } catch(e){ /* ignore */ }
+  }
+}
+
+async function loadState(){
+  const raw = await storageGet(STORAGE_KEY);
+  if(raw){
+    try{
+      const parsed = JSON.parse(raw);
+      state = Object.assign(state, parsed);
+      if(!Array.isArray(state.words)) state.words = STARTER_WORDS.slice();
+    }catch(e){ /* corrupt, keep defaults */ }
+  }
+  renderHome();
+}
+function saveState(){
+  storageSet(STORAGE_KEY, JSON.stringify(state));
+}
+
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function bumpStreak(){
+  const today = todayStr();
+  if(state.lastStudyDate === today) return;
+  const y = new Date(); y.setDate(y.getDate()-1);
+  const yesterday = y.toISOString().slice(0,10);
+  state.streak = (state.lastStudyDate === yesterday) ? state.streak + 1 : 1;
+  state.lastStudyDate = today;
+}
+
+function wordById(id){ return state.words.find(w => w.id === id); }
+function genId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function speak(text){
+  if(!text) return;
+  if(!("speechSynthesis" in window)) return;
+  try{
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US";
+    u.rate = 0.95;
+    window.speechSynthesis.speak(u);
+  }catch(e){ /* ignore */ }
+}
+function speakCurrent(){
+  const wIdx = session.queue[session.idx];
+  const w = wordById(wIdx);
+  if(w) speak(w.en);
+}
+
+function renderHome(){
+  const weakIds = state.words.map(w=>w.id).filter(id => state.wrong[id] > 0);
+  document.getElementById("weakCount").textContent = weakIds.length;
+  document.getElementById("weakQuizCount").textContent = weakIds.length;
+  document.getElementById("weakQuizCard").classList.toggle("disabled", weakIds.length===0);
+  document.getElementById("allCount").textContent = state.words.length + "語";
+  const dueIds = state.words.map(w=>w.id).filter(id => isDueForReview(id));
+  document.getElementById("spacedCount").textContent = dueIds.length;
+  document.getElementById("spacedCard").classList.toggle("disabled", dueIds.length===0);
+
+  const isEmpty = state.words.length === 0;
+  document.getElementById("emptyHint").style.display = isEmpty ? "block" : "none";
+  document.getElementById("dailyCard").classList.toggle("disabled", isEmpty);
+  document.getElementById("allCard").classList.toggle("disabled", isEmpty);
+}
+
+function showScreen(name){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(name).classList.add("active");
+  document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+  const navBtn = document.querySelector('nav button[data-nav="'+name+'"]');
+  if(navBtn) navBtn.classList.add("active");
+  if(name === "home") renderHome();
+  if(name === "list") renderList();
+  if(name === "weakList") renderWeakList();
+  if(name === "add"){
+    document.getElementById("inEn").value = "";
+    document.getElementById("inJa").value = "";
+    document.getElementById("inPh").value = "";
+    document.getElementById("inEx").value = "";
+    document.getElementById("inExJa").value = "";
+    document.getElementById("phStatus").textContent = "";
+    document.getElementById("formError").textContent = "";
+  }
+}
+
+function shuffled(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function startQuiz(mode){
+  const allIds = state.words.map(w=>w.id);
+  if(allIds.length===0) return;
+  let pool;
+  if(mode === "daily"){
+    pool = shuffled(allIds).slice(0,5);
+  } else if(mode === "spaced"){
+    pool = allIds.filter(id=>isDueForReview(id));
+    if(pool.length === 0) return;
+    pool = shuffled(pool);
+  } else if(mode === "weak"){
+    pool = allIds.filter(id=>state.wrong[id] > 0);
+    if(pool.length === 0) return;
+    pool = shuffled(pool);
+  } else {
+    pool = shuffled(allIds);
+  }
+  session = { queue: pool, idx: 0, correctCount: 0, mode, answered:false, revealed:false };
+  showScreen("quiz");
+  renderQuestion();
+}
+
+function renderPhoneticHtml(ph){
+  if(!ph) return "";
+  const escaped = escapeHtml(ph);
+  const withStress = escaped.replace(/ˈ/g, '<span class="stress">ˈ</span>');
+  return "[" + withStress + "]";
+}
+
+function renderQuestion(){
+  const wId = session.queue[session.idx];
+  const word = wordById(wId);
+  session.answered = false;
+  session.revealed = false;
+
+  const card = document.getElementById("quizCard");
+  card.classList.remove("revealed","correct","wrong");
+
+  document.getElementById("progFill").style.width = (100*session.idx/session.queue.length)+"%";
+  document.getElementById("quizTag").textContent = "Q"+(session.idx+1)+" / "+session.queue.length;
+  document.getElementById("quizWord").textContent = word.en;
+  document.getElementById("quizPhonetic").innerHTML = renderPhoneticHtml(word.ph);
+  document.getElementById("quizMeaning").classList.remove("show");
+  document.getElementById("quizMeaning").textContent = "";
+  document.getElementById("tapHint").style.display = "block";
+
+  document.getElementById("exampleBox").classList.remove("show");
+  document.getElementById("nextBtn").classList.remove("show");
+  document.getElementById("exEn").textContent = word.ex || "";
+  document.getElementById("exJa").textContent = word.exja || "";
+  document.getElementById("choices").innerHTML = "";
+
+  card.onclick = ()=>revealFlashcard(wId);
+  speak(word.en);
+}
+
+function revealFlashcard(wId){
+  if(session.revealed) return;
+  session.revealed = true;
+  const word = wordById(wId);
+  const card = document.getElementById("quizCard");
+  card.classList.add("revealed");
+  document.getElementById("tapHint").style.display = "none";
+  const meaningEl = document.getElementById("quizMeaning");
+  meaningEl.textContent = word.ja;
+  meaningEl.classList.add("show");
+  if(word.ex) document.getElementById("exampleBox").classList.add("show");
+
+  const choicesEl = document.getElementById("choices");
+  choicesEl.innerHTML = '<div class="flash-actions"><button class="flash-btn dontknow">わからなかった</button><button class="flash-btn know">覚えている</button></div>';
+  choicesEl.querySelector(".know").onclick = ()=>flashcardResult(wId, true);
+  choicesEl.querySelector(".dontknow").onclick = ()=>flashcardResult(wId, false);
+}
+
+function flashcardResult(correctId, isCorrect){
+  if(session.answered) return;
+  session.answered = true;
+
+  const card = document.getElementById("quizCard");
+  card.classList.add(isCorrect ? "correct" : "wrong");
+  document.querySelectorAll(".flash-btn").forEach(b=>b.disabled = true);
+
+  state.totalAnswered++;
+  if(isCorrect){
+    state.totalCorrect++;
+    session.correctCount++;
+    state.learned[correctId] = true;
+    if(state.wrong[correctId]) state.wrong[correctId] = Math.max(0, state.wrong[correctId]-1);
+  } else {
+    state.wrong[correctId] = (state.wrong[correctId]||0) + 1;
+  }
+  scheduleNextReview(correctId, isCorrect);
+
+  document.getElementById("nextBtn").classList.add("show");
+  document.getElementById("nextBtn").textContent = (session.idx+1 < session.queue.length) ? "次へ" : "結果を見る";
+  saveState();
+}
+
+function nextQuestion(){
+  session.idx++;
+  if(session.idx >= session.queue.length){
+    finishQuiz();
+  } else {
+    renderQuestion();
+  }
+}
+
+function finishQuiz(){
+  bumpStreak();
+  saveState();
+  document.getElementById("progFill").style.width = "100%";
+  document.getElementById("resultScore").textContent = session.correctCount+"/"+session.queue.length;
+  const ratio = session.correctCount/session.queue.length;
+  let msg;
+  if(ratio === 1) msg = "全問正解。よく仕上がっている。";
+  else if(ratio >= 0.7) msg = "いい調子。苦手単語はあとで「苦手単語を管理」から見直そう。";
+  else msg = "焦らなくて大丈夫。苦手単語は自動でリストに入っているので、あとで見直そう。";
+  document.getElementById("resultMsg").textContent = msg;
+  showScreen("result");
+}
+
+function renderList(){
+  document.getElementById("listTotal").textContent = state.words.length;
+  const body = document.getElementById("listBody");
+  body.innerHTML = "";
+  if(state.words.length === 0){
+    body.innerHTML = '<div class="empty-note">まだ単語が登録されていません。<br>「+ 追加」から最初の単語を登録しよう。</div>';
+    return;
+  }
+  state.words.forEach(w=>{
+    const isWeak = state.wrong[w.id] > 0;
+    const isMastered = state.learned[w.id] && !isWeak;
+    let badgeHtml = "";
+    if(isWeak) badgeHtml = '<div class="badge">苦手</div>';
+    else if(isMastered) badgeHtml = '<div class="badge mastered">習得</div>';
+    const row = document.createElement("div");
+    row.className = "word-row tappable";
+    row.innerHTML = `
+      <div class="info">
+        <div class="en">${escapeHtml(w.en)}</div>
+        <div class="ja">${escapeHtml(w.ja)}</div>
+      </div>
+      ${badgeHtml}
+      <div class="row-actions">
+        <button class="icon-btn" title="発音">🔊</button>
+        <button class="icon-btn danger" title="削除">🗑</button>
+      </div>
+    `;
+    const jaEl = row.querySelector(".ja");
+    const speakBtn = row.querySelector(".icon-btn:not(.danger)");
+    const deleteBtn = row.querySelector(".icon-btn.danger");
+    row.addEventListener("click", ()=>{ jaEl.classList.toggle("show"); });
+    speakBtn.addEventListener("click", (e)=>{ e.stopPropagation(); speak(w.en); });
+    deleteBtn.addEventListener("click", (e)=>{ e.stopPropagation(); deleteWord(w.id); });
+    body.appendChild(row);
+  });
+}
+
+function renderWeakList(){
+  const weakWords = state.words.filter(w=>state.wrong[w.id] > 0);
+  document.getElementById("weakTotal").textContent = weakWords.length;
+  const body = document.getElementById("weakBody");
+  body.innerHTML = "";
+  if(weakWords.length === 0){
+    body.innerHTML = '<div class="empty-note">苦手単語はありません。<br>クイズで「わからなかった」を選んだ単語が自動でここに表示されます。</div>';
+    return;
+  }
+  weakWords.forEach(w=>{
+    const row = document.createElement("div");
+    row.className = "word-row tappable";
+    row.innerHTML = `
+      <div class="info">
+        <div class="en">${escapeHtml(w.en)}</div>
+        <div class="ja">${escapeHtml(w.ja)}</div>
+      </div>
+      <div class="row-actions">
+        <button class="icon-btn" title="発音">🔊</button>
+        <button class="icon-btn success" title="覚えた">✓</button>
+        <button class="icon-btn danger" title="削除">🗑</button>
+      </div>
+    `;
+    const jaEl = row.querySelector(".ja");
+    const speakBtn = row.querySelector(".icon-btn:not(.success):not(.danger)");
+    const masterBtn = row.querySelector(".icon-btn.success");
+    const deleteBtn = row.querySelector(".icon-btn.danger");
+    row.addEventListener("click", ()=>{ jaEl.classList.toggle("show"); });
+    speakBtn.addEventListener("click", (e)=>{ e.stopPropagation(); speak(w.en); });
+    masterBtn.addEventListener("click", (e)=>{ e.stopPropagation(); masterWord(w.id); });
+    deleteBtn.addEventListener("click", (e)=>{ e.stopPropagation(); deleteWord(w.id); });
+    body.appendChild(row);
+  });
+}
+
+function masterWord(id){
+  state.wrong[id] = 0;
+  state.learned[id] = true;
+  saveState();
+  renderWeakList();
+  renderHome();
+}
+
+function showConfirm(message, onConfirm){
+  const overlay = document.getElementById("modalOverlay");
+  document.getElementById("modalMsg").textContent = message;
+  overlay.classList.add("show");
+  const confirmBtn = document.getElementById("modalConfirmBtn");
+  const cancelBtn = document.getElementById("modalCancelBtn");
+  function cleanup(){
+    overlay.classList.remove("show");
+    confirmBtn.removeEventListener("click", onConfirmClick);
+    cancelBtn.removeEventListener("click", onCancelClick);
+  }
+  function onConfirmClick(){ cleanup(); onConfirm(); }
+  function onCancelClick(){ cleanup(); }
+  confirmBtn.addEventListener("click", onConfirmClick);
+  cancelBtn.addEventListener("click", onCancelClick);
+}
+
+function deleteWord(id){
+  const w = wordById(id);
+  const name = w ? w.en : "この単語";
+  showConfirm(name + " を単語帳から削除しますか？この操作は取り消せません。", ()=>{
+    state.words = state.words.filter(x=>x.id !== id);
+    delete state.wrong[id];
+    delete state.learned[id];
+    delete state.review[id];
+    saveState();
+    renderList();
+    renderWeakList();
+    renderHome();
+  });
+}
+
+function escapeHtml(str){
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+async function generateForWordViaAI(word){
+  const prompt = '英単語 "' + word + '" について、以下の項目だけを含む有効なJSONを1つだけ出力してください。説明文やコードブロックのマークダウンは一切含めないでください。\n' +
+    '{"phonetic": "米音のIPA発音記号。スラッシュや角括弧は付けず、第一強勢記号のˈを正しい位置に含める", "example": "ネイティブスピーカーが日常会話やニュースなどで実際に使うような、自然で口語的な英語例文。この単語を使うこと。1文のみ", "exampleJa": "上の例文の自然な日本語訳"}';
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 300,
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+  if(!response.ok) throw new Error("api error");
+  const data = await response.json();
+  const text = (data.content || []).map(c => c.text || "").join("");
+  const cleaned = text.replace(/```json|```/g, "").trim();
+  const parsed = JSON.parse(cleaned);
+  return {
+    phonetic: parsed.phonetic || "",
+    example: parsed.example || "",
+    exampleJa: parsed.exampleJa || ""
+  };
+}
+
+async function generateForWordViaDictionary(word){
+  try{
+    const res = await fetch("https://api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(word));
+    if(!res.ok) return null;
+    const data = await res.json();
+    if(!Array.isArray(data) || data.length === 0) return null;
+    let phonetic = "";
+    let example = "";
+    for(const entry of data){
+      if(!phonetic){
+        if(entry.phonetic) phonetic = entry.phonetic.replace(/^\/|\/$/g, "");
+        else if(Array.isArray(entry.phonetics)){
+          const withText = entry.phonetics.find(p => p.text);
+          if(withText) phonetic = withText.text.replace(/^\/|\/$/g, "");
+        }
+      }
+      if(!example && Array.isArray(entry.meanings)){
+        for(const m of entry.meanings){
+          if(Array.isArray(m.definitions)){
+            const withEx = m.definitions.find(d => d.example);
+            if(withEx){ example = withEx.example; break; }
+          }
+        }
+      }
+      if(phonetic && example) break;
+    }
+    if(!phonetic && !example) return null;
+    return { phonetic, example, exampleJa: "" };
+  }catch(e){ return null; }
+}
+
+async function generateWordDetails(force){
+  const enField = document.getElementById("inEn");
+  const phField = document.getElementById("inPh");
+  const exField = document.getElementById("inEx");
+  const exJaField = document.getElementById("inExJa");
+  const statusEl = document.getElementById("phStatus");
+  const genBtn = document.getElementById("genBtn");
+  const word = enField.value.trim();
+  if(!word){ statusEl.textContent = "先に英単語を入力してください。"; return; }
+  if(!force && phField.value.trim() && exField.value.trim()){ return; }
+
+  genBtn.disabled = true;
+  statusEl.textContent = "発音・例文を自動生成中…";
+
+  let result = null;
+  if(hasCloudStorage){
+    try{ result = await generateForWordViaAI(word); }
+    catch(e){ result = null; }
+  }
+  if(!result){
+    result = await generateForWordViaDictionary(word);
+  }
+
+  if(result){
+    if(force || !phField.value.trim()) phField.value = result.phonetic || phField.value;
+    if(force || !exField.value.trim()) exField.value = result.example || exField.value;
+    if(result.exampleJa && (force || !exJaField.value.trim())) exJaField.value = result.exampleJa;
+    statusEl.textContent = result.exampleJa
+      ? "AIが発音記号と自然な例文を生成しました（編集も可）"
+      : "辞書データから取得しました。例文の日本語訳は手動で入力してください。";
+  } else {
+    statusEl.textContent = "自動生成できませんでした（通信環境をご確認ください）。手動で入力してください。";
+  }
+  genBtn.disabled = false;
+}
+
+document.getElementById("inEn").addEventListener("blur", ()=>generateWordDetails(false));
+document.getElementById("genBtn").addEventListener("click", ()=>generateWordDetails(true));
+
+async function submitAddWord(){
+  const errorEl = document.getElementById("formError");
+  errorEl.textContent = "";
+  const en = document.getElementById("inEn").value.trim();
+  const ja = document.getElementById("inJa").value.trim();
+  if(!en || !ja){
+    errorEl.textContent = "英単語と意味は必須です。";
+    return;
+  }
+  if(!document.getElementById("inPh").value.trim() || !document.getElementById("inEx").value.trim()){
+    await generateWordDetails(false);
+  }
+  const ph = document.getElementById("inPh").value.trim();
+  const ex = document.getElementById("inEx").value.trim();
+  const exja = document.getElementById("inExJa").value.trim();
+  state.words.push({ id: genId(), en, ja, ph, ex, exja });
+  saveState();
+  showScreen("list");
+}
+
+loadState();
+</script>
+</body>
+</html>
