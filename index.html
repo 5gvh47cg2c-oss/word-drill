@@ -900,27 +900,29 @@ function renderWeakList(){
     return;
   }
   weakWords.forEach(w=>{
+    const sourceHtml = w.source ? `<div class="source">${escapeHtml(w.source)}</div>` : "";
     const row = document.createElement("div");
     row.className = "word-row tappable";
     row.innerHTML = `
       <div class="info">
         <div class="en">${escapeHtml(w.en)}</div>
         <div class="ja">${escapeHtml(w.ja)}</div>
+        ${sourceHtml}
       </div>
       <div class="row-actions">
         <button class="icon-btn" title="発音">🔊</button>
-        <button class="icon-btn success" title="覚えた">✓</button>
-        <button class="icon-btn danger" title="削除">🗑</button>
+        <button class="icon-btn success" title="苦手リストから外す">✓</button>
       </div>
     `;
     const jaEl = row.querySelector(".ja");
-    const speakBtn = row.querySelector(".icon-btn:not(.success):not(.danger)");
+    const speakBtn = row.querySelector(".icon-btn:not(.success)");
     const masterBtn = row.querySelector(".icon-btn.success");
-    const deleteBtn = row.querySelector(".icon-btn.danger");
     row.addEventListener("click", ()=>{ jaEl.classList.toggle("show"); });
     speakBtn.addEventListener("click", (e)=>{ e.stopPropagation(); speak(w.en); });
-    masterBtn.addEventListener("click", (e)=>{ e.stopPropagation(); masterWord(w.id); });
-    deleteBtn.addEventListener("click", (e)=>{ e.stopPropagation(); deleteWord(w.id); });
+    masterBtn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      showConfirm(w.en + " を苦手リストから外しますか？（単語帳には残ります）", ()=>masterWord(w.id));
+    });
     body.appendChild(row);
   });
 }
