@@ -347,18 +347,6 @@ input[type=text], textarea{
 }
 textarea{ resize:vertical; min-height:56px; }
 input::placeholder, textarea::placeholder{ color: rgba(251,248,242,0.3); }
-.gen-btn{
-  width:100%;
-  padding:13px;
-  border-radius:6px;
-  border:1px solid rgba(226,166,20,0.4);
-  background: rgba(226,166,20,0.12);
-  color: var(--amber);
-  font-weight:700;
-  font-size:14.5px;
-  cursor:pointer;
-}
-.gen-btn:disabled{ opacity:.5; }
 .save-btn{
   margin-top:6px;
   padding:14px;
@@ -526,22 +514,6 @@ nav button.active{ color: var(--amber); }
       <label>意味（必須）</label>
       <input type="text" id="inJa" placeholder="例: 忍耐、根気">
     </div>
-    <div class="form-group">
-      <button class="gen-btn" id="genBtn">🪄 発音・例文を自動生成</button>
-      <div id="phStatus" style="font-size:11.5px;color:rgba(251,248,242,0.5);margin-top:8px;"></div>
-    </div>
-    <div class="form-group">
-      <label>発音記号・アクセント位置（自動生成／手で編集も可）</label>
-      <input type="text" id="inPh" placeholder="自動生成されます">
-    </div>
-    <div class="form-group">
-      <label>例文（自動生成／手で編集も可）</label>
-      <textarea id="inEx" placeholder="自動生成されます"></textarea>
-    </div>
-    <div class="form-group">
-      <label>例文の訳（自動生成／手で編集も可）</label>
-      <textarea id="inExJa" placeholder="自動生成されます"></textarea>
-    </div>
     <button class="save-btn" onclick="submitAddWord()">単語帳に追加する</button>
     <div class="form-error" id="formError"></div>
   </section>
@@ -694,10 +666,6 @@ function showScreen(name){
   if(name === "add"){
     document.getElementById("inEn").value = "";
     document.getElementById("inJa").value = "";
-    document.getElementById("inPh").value = "";
-    document.getElementById("inEx").value = "";
-    document.getElementById("inExJa").value = "";
-    document.getElementById("phStatus").textContent = "";
     document.getElementById("formError").textContent = "";
   }
 }
@@ -950,101 +918,7 @@ function escapeHtml(str){
   return div.innerHTML;
 }
 
-async function generateForWordViaAI(word){
-  const prompt = '英単語 "' + word + '" について、以下の項目だけを含む有効なJSONを1つだけ出力してください。説明文やコードブロックのマークダウンは一切含めないでください。\n' +
-    '{"phonetic": "米音のIPA発音記号。スラッシュや角括弧は付けず、第一強勢記号のˈを正しい位置に含める", "example": "ネイティブスピーカーが日常会話やニュースなどで実際に使うような、自然で口語的な英語例文。この単語を使うこと。1文のみ", "exampleJa": "上の例文の自然な日本語訳"}';
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 300,
-      messages: [{ role: "user", content: prompt }]
-    })
-  });
-  if(!response.ok) throw new Error("api error");
-  const data = await response.json();
-  const text = (data.content || []).map(c => c.text || "").join("");
-  const cleaned = text.replace(/```json|```/g, "").trim();
-  const parsed = JSON.parse(cleaned);
-  return {
-    phonetic: parsed.phonetic || "",
-    example: parsed.example || "",
-    exampleJa: parsed.exampleJa || ""
-  };
-}
-
-async function generateForWordViaDictionary(word){
-  try{
-    const res = await fetch("https://api.dictionaryapi.dev/api/v2/entries/en/" + encodeURIComponent(word));
-    if(!res.ok) return null;
-    const data = await res.json();
-    if(!Array.isArray(data) || data.length === 0) return null;
-    let phonetic = "";
-    let example = "";
-    for(const entry of data){
-      if(!phonetic){
-        if(entry.phonetic) phonetic = entry.phonetic.replace(/^\/|\/$/g, "");
-        else if(Array.isArray(entry.phonetics)){
-          const withText = entry.phonetics.find(p => p.text);
-          if(withText) phonetic = withText.text.replace(/^\/|\/$/g, "");
-        }
-      }
-      if(!example && Array.isArray(entry.meanings)){
-        for(const m of entry.meanings){
-          if(Array.isArray(m.definitions)){
-            const withEx = m.definitions.find(d => d.example);
-            if(withEx){ example = withEx.example; break; }
-          }
-        }
-      }
-      if(phonetic && example) break;
-    }
-    if(!phonetic && !example) return null;
-    return { phonetic, example, exampleJa: "" };
-  }catch(e){ return null; }
-}
-
-async function generateWordDetails(force){
-  const enField = document.getElementById("inEn");
-  const phField = document.getElementById("inPh");
-  const exField = document.getElementById("inEx");
-  const exJaField = document.getElementById("inExJa");
-  const statusEl = document.getElementById("phStatus");
-  const genBtn = document.getElementById("genBtn");
-  const word = enField.value.trim();
-  if(!word){ statusEl.textContent = "先に英単語を入力してください。"; return; }
-  if(!force && phField.value.trim() && exField.value.trim()){ return; }
-
-  genBtn.disabled = true;
-  statusEl.textContent = "発音・例文を自動生成中…";
-
-  let result = null;
-  if(hasCloudStorage){
-    try{ result = await generateForWordViaAI(word); }
-    catch(e){ result = null; }
-  }
-  if(!result){
-    result = await generateForWordViaDictionary(word);
-  }
-
-  if(result){
-    if(force || !phField.value.trim()) phField.value = result.phonetic || phField.value;
-    if(force || !exField.value.trim()) exField.value = result.example || exField.value;
-    if(result.exampleJa && (force || !exJaField.value.trim())) exJaField.value = result.exampleJa;
-    statusEl.textContent = result.exampleJa
-      ? "AIが発音記号と自然な例文を生成しました（編集も可）"
-      : "辞書データから取得しました。例文の日本語訳は手動で入力してください。";
-  } else {
-    statusEl.textContent = "自動生成できませんでした（通信環境をご確認ください）。手動で入力してください。";
-  }
-  genBtn.disabled = false;
-}
-
-document.getElementById("inEn").addEventListener("blur", ()=>generateWordDetails(false));
-document.getElementById("genBtn").addEventListener("click", ()=>generateWordDetails(true));
-
-async function submitAddWord(){
+function submitAddWord(){
   const errorEl = document.getElementById("formError");
   errorEl.textContent = "";
   const en = document.getElementById("inEn").value.trim();
@@ -1053,13 +927,7 @@ async function submitAddWord(){
     errorEl.textContent = "英単語と意味は必須です。";
     return;
   }
-  if(!document.getElementById("inPh").value.trim() || !document.getElementById("inEx").value.trim()){
-    await generateWordDetails(false);
-  }
-  const ph = document.getElementById("inPh").value.trim();
-  const ex = document.getElementById("inEx").value.trim();
-  const exja = document.getElementById("inExJa").value.trim();
-  state.words.push({ id: genId(), en, ja, ph, ex, exja });
+  state.words.push({ id: genId(), en, ja, ph: "", ex: "", exja: "" });
   saveState();
   showScreen("list");
 }
