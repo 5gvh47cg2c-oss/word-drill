@@ -292,6 +292,18 @@ header .streak b{ color: var(--amber); font-weight:700; }
 }
 
 .list-header{ display:flex; align-items:center; gap:10px; margin:10px 0 16px; }
+.search-input{
+  width:100%;
+  padding:11px 14px;
+  border-radius:6px;
+  border:1px solid rgba(251,248,242,0.2);
+  background: rgba(251,248,242,0.06);
+  color: var(--paper);
+  font-size:14px;
+  margin-bottom:14px;
+  font-family:-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+}
+.search-input::placeholder{ color: rgba(251,248,242,0.3); }
 .back-btn{
   background:none; border:none; color: var(--paper); font-size:20px; cursor:pointer; padding:4px 6px 4px 0;
 }
@@ -486,6 +498,7 @@ nav button.active{ color: var(--amber); }
       <div class="list-title">単語帳（全<span id="listTotal"></span>語）</div>
       <button class="add-fab" onclick="showScreen('add')">+ 追加</button>
     </div>
+    <input type="text" id="listSearch" class="search-input" placeholder="単語・意味・出典で検索" oninput="renderList()">
     <div id="listBody"></div>
   </section>
 
@@ -521,6 +534,31 @@ nav button.active{ color: var(--amber); }
     </div>
     <button class="save-btn" onclick="submitAddWord()">単語帳に追加する</button>
     <div class="form-error" id="formError"></div>
+  </section>
+
+  <!-- EDIT WORD -->
+  <section class="screen" id="edit">
+    <div class="list-header">
+      <button class="back-btn" onclick="showScreen('list')">←</button>
+      <div class="list-title">単語を編集</div>
+    </div>
+    <div class="form-group">
+      <label>英単語（必須）</label>
+      <div class="form-row">
+        <input type="text" id="inEditEn" placeholder="例: perseverance">
+        <button class="icon-btn" onclick="speak(document.getElementById('inEditEn').value)">🔊</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>意味（必須）</label>
+      <input type="text" id="inEditJa" placeholder="例: 忍耐、根気">
+    </div>
+    <div class="form-group">
+      <label>出典・メモ（任意）</label>
+      <input type="text" id="inEditSource" placeholder="例: 2026慶應(商)①">
+    </div>
+    <button class="save-btn" onclick="submitEditWord()">保存する</button>
+    <div class="form-error" id="editFormError"></div>
   </section>
 
   <nav>
@@ -658,7 +696,7 @@ function showScreen(name){
   const navBtn = document.querySelector('nav button[data-nav="'+name+'"]');
   if(navBtn) navBtn.classList.add("active");
   if(name === "home") renderHome();
-  if(name === "list") renderList();
+  if(name === "list"){ document.getElementById("listSearch").value = ""; renderList(); }
   if(name === "weakList") renderWeakList();
   if(name === "add"){
     document.getElementById("inEn").value = "";
@@ -806,7 +844,19 @@ function renderList(){
     body.innerHTML = '<div class="empty-note">まだ単語が登録されていません。<br>「+ 追加」から最初の単語を登録しよう。</div>';
     return;
   }
-  state.words.forEach(w=>{
+  const query = (document.getElementById("listSearch").value || "").trim().toLowerCase();
+  const filtered = query
+    ? state.words.filter(w =>
+        w.en.toLowerCase().includes(query) ||
+        w.ja.toLowerCase().includes(query) ||
+        (w.source && w.source.toLowerCase().includes(query))
+      )
+    : state.words;
+  if(filtered.length === 0){
+    body.innerHTML = '<div class="empty-note">「'+escapeHtml(query)+'」に一致する単語がありません。</div>';
+    return;
+  }
+  filtered.forEach(w=>{
     const isWeak = state.wrong[w.id] > 0;
     const isMastered = state.learned[w.id] && !isWeak;
     let badgeHtml = "";
@@ -824,14 +874,17 @@ function renderList(){
       ${badgeHtml}
       <div class="row-actions">
         <button class="icon-btn" title="発音">🔊</button>
+        <button class="icon-btn edit" title="編集">✏️</button>
         <button class="icon-btn danger" title="削除">🗑</button>
       </div>
     `;
     const jaEl = row.querySelector(".ja");
-    const speakBtn = row.querySelector(".icon-btn:not(.danger)");
+    const speakBtn = row.querySelector(".icon-btn:not(.danger):not(.edit)");
+    const editBtn = row.querySelector(".icon-btn.edit");
     const deleteBtn = row.querySelector(".icon-btn.danger");
     row.addEventListener("click", ()=>{ jaEl.classList.toggle("show"); });
     speakBtn.addEventListener("click", (e)=>{ e.stopPropagation(); speak(w.en); });
+    editBtn.addEventListener("click", (e)=>{ e.stopPropagation(); openEditWord(w.id); });
     deleteBtn.addEventListener("click", (e)=>{ e.stopPropagation(); deleteWord(w.id); });
     body.appendChild(row);
   });
@@ -930,6 +983,39 @@ function submitAddWord(){
   }
   state.words.push({ id: genId(), en, ja, ph: "", ex: "", exja: "", source });
   saveState();
+  showScreen("list");
+}
+
+let editingWordId = null;
+
+function openEditWord(id){
+  const w = wordById(id);
+  if(!w) return;
+  editingWordId = id;
+  document.getElementById("inEditEn").value = w.en;
+  document.getElementById("inEditJa").value = w.ja;
+  document.getElementById("inEditSource").value = w.source || "";
+  document.getElementById("editFormError").textContent = "";
+  showScreen("edit");
+}
+
+function submitEditWord(){
+  const errorEl = document.getElementById("editFormError");
+  errorEl.textContent = "";
+  const en = document.getElementById("inEditEn").value.trim();
+  const ja = document.getElementById("inEditJa").value.trim();
+  const source = document.getElementById("inEditSource").value.trim();
+  if(!en || !ja){
+    errorEl.textContent = "英単語と意味は必須です。";
+    return;
+  }
+  const w = wordById(editingWordId);
+  if(w){
+    w.en = en;
+    w.ja = ja;
+    w.source = source;
+    saveState();
+  }
   showScreen("list");
 }
 
