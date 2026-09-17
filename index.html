@@ -54,7 +54,7 @@ header{
   justify-content:space-between;
 }
 header .brand{
-  font-family:'Hiragino Mincho ProN', 'Yu Mincho', serif;
+  font-family:-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
   font-size:22px;
   font-weight:700;
   letter-spacing:.02em;
@@ -71,7 +71,7 @@ header .streak b{ color: var(--amber); font-weight:700; }
 .screen.active{ display:flex; flex-direction:column; }
 
 #home .lead{
-  font-family:'Hiragino Mincho ProN', 'Yu Mincho', serif;
+  font-family:-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
   font-size:19px;
   line-height:1.7;
   margin: 6px 0 20px;
@@ -191,8 +191,8 @@ header .streak b{ color: var(--amber); font-weight:700; }
   cursor:pointer;
 }
 .card .word{
-  font-family:Georgia, 'Hiragino Mincho ProN', serif;
-  font-style:italic;
+  font-family:-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+  font-style:normal;
   font-weight:700;
   font-size:36px;
   line-height:1.2;
@@ -263,12 +263,12 @@ header .streak b{ color: var(--amber); font-weight:700; }
 
 .result-wrap{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
 .result-wrap .big{
-  font-family:Georgia, 'Hiragino Mincho ProN', serif;
+  font-family:-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
   font-size:54px; font-weight:700; color: var(--amber);
 }
 .result-wrap .sub{ font-size:14px; color: rgba(251,248,242,0.65); margin-top:6px; }
 .result-wrap .msg{
-  font-family:'Hiragino Mincho ProN', 'Yu Mincho', serif;
+  font-family:-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
   font-size:17px; margin-top:22px; line-height:1.7;
 }
 .primary-btn{
@@ -306,10 +306,30 @@ header .streak b{ color: var(--amber); font-weight:700; }
   font-family:-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
 }
 .search-input::placeholder{ color: rgba(251,248,242,0.3); }
+.view-toggle{ display:flex; gap:6px; background:rgba(251,248,242,0.08); border-radius:20px; padding:4px; margin-bottom:14px; width:fit-content; }
+.view-toggle button{
+  border:none; background:transparent; color:rgba(251,248,242,0.5);
+  font-size:11px; font-weight:700; padding:6px 12px; border-radius:16px; cursor:pointer;
+  font-family:-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+}
+.view-toggle button.active{ background: var(--amber); color: var(--ink); }
+.group-heading{ font-size:12px; color: var(--amber); font-weight:700; margin:0 0 8px; }
+.group-heading.none{ color: rgba(251,248,242,0.4); }
+select{
+  width:100%;
+  padding:12px 14px;
+  border-radius:6px;
+  border:1px solid rgba(251,248,242,0.2);
+  background: rgba(251,248,242,0.06);
+  color: var(--paper);
+  font-size:15px;
+  font-family:-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+}
+.new-group-input{ margin-top:8px; }
 .back-btn{
   background:none; border:none; color: var(--paper); font-size:20px; cursor:pointer; padding:4px 6px 4px 0;
 }
-.list-title{ font-family:'Hiragino Mincho ProN', 'Yu Mincho', serif; font-size:18px; font-weight:700; flex:1; }
+.list-title{ font-family:-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif; font-size:18px; font-weight:700; flex:1; }
 .add-fab{
   background: var(--amber); color: var(--ink); border:none; border-radius:6px;
   padding:8px 14px; font-size:13px; font-weight:700; cursor:pointer;
@@ -324,7 +344,7 @@ header .streak b{ color: var(--amber); font-weight:700; }
   margin-bottom:8px;
 }
 .word-row .info{ flex:1; min-width:0; }
-.word-row .en{ font-family:Georgia, 'Hiragino Mincho ProN', serif; font-style:italic; font-weight:600; font-size:16px; }
+.word-row .en{ font-family:-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif; font-style:normal; font-weight:700; font-size:16px; }
 .word-row .ja{ font-size:13px; color: rgba(251,248,242,0.65); margin-top:2px; display:none; }
 .word-row .ja.show{ display:block; }
 .word-row .source{ font-size:11px; color: rgba(251,248,242,0.4); margin-top:2px; }
@@ -501,6 +521,10 @@ nav button.active{ color: var(--amber); }
       <button class="add-fab" onclick="showScreen('add')">+ 追加</button>
     </div>
     <input type="text" id="listSearch" class="search-input" placeholder="単語・意味・出典で検索" oninput="renderList()">
+    <div class="view-toggle">
+      <button id="viewFlatBtn" onclick="setListView('flat')">一覧表示</button>
+      <button id="viewGroupBtn" onclick="setListView('group')">グループ表示</button>
+    </div>
     <div id="listBody"></div>
   </section>
 
@@ -531,6 +555,11 @@ nav button.active{ color: var(--amber); }
       <input type="text" id="inJa" placeholder="例: 忍耐、根気">
     </div>
     <div class="form-group">
+      <label>グループ（任意）</label>
+      <select id="inGroup" onchange="handleGroupSelectChange('inGroup','inNewGroup')"></select>
+      <input type="text" id="inNewGroup" class="new-group-input" placeholder="新しいグループ名を入力" style="display:none;">
+    </div>
+    <div class="form-group">
       <label>出典・メモ（任意）</label>
       <input type="text" id="inSource" placeholder="例: 2026慶應(商)①">
     </div>
@@ -554,6 +583,11 @@ nav button.active{ color: var(--amber); }
     <div class="form-group">
       <label>意味（必須）</label>
       <input type="text" id="inEditJa" placeholder="例: 忍耐、根気">
+    </div>
+    <div class="form-group">
+      <label>グループ（任意）</label>
+      <select id="inEditGroup" onchange="handleGroupSelectChange('inEditGroup','inEditNewGroup')"></select>
+      <input type="text" id="inEditNewGroup" class="new-group-input" placeholder="新しいグループ名を入力" style="display:none;">
     </div>
     <div class="form-group">
       <label>出典・メモ（任意）</label>
@@ -613,6 +647,7 @@ function scheduleNextReview(id, isCorrect){
 }
 
 let session = { queue: [], idx: 0, correctCount: 0, mode: "daily", answered: false, revealed: false };
+let listViewMode = "flat";
 
 async function storageGet(key){
   if(hasCloudStorage){
@@ -698,13 +733,16 @@ function showScreen(name){
   const navBtn = document.querySelector('nav button[data-nav="'+name+'"]');
   if(navBtn) navBtn.classList.add("active");
   if(name === "home") renderHome();
-  if(name === "list"){ document.getElementById("listSearch").value = ""; renderList(); }
+  if(name === "list"){ document.getElementById("listSearch").value = ""; listViewMode = "flat"; renderList(); }
   if(name === "weakList") renderWeakList();
   if(name === "add"){
     document.getElementById("inEn").value = "";
     document.getElementById("inJa").value = "";
     document.getElementById("inSource").value = "";
     document.getElementById("formError").textContent = "";
+    populateGroupSelect("inGroup", "");
+    document.getElementById("inNewGroup").style.display = "none";
+    document.getElementById("inNewGroup").value = "";
   }
 }
 
@@ -838,8 +876,87 @@ function finishQuiz(){
   showScreen("result");
 }
 
+function getUniqueGroups(){
+  const set = new Set();
+  state.words.forEach(w=>{ if(w.group) set.add(w.group); });
+  return Array.from(set).sort((a,b)=>a.localeCompare(b,"ja"));
+}
+
+function populateGroupSelect(selectId, currentValue){
+  const sel = document.getElementById(selectId);
+  const groups = getUniqueGroups();
+  let html = '<option value="">グループなし</option>';
+  groups.forEach(g=>{
+    html += `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`;
+  });
+  html += '<option value="__new__">＋ 新しいグループを作る</option>';
+  sel.innerHTML = html;
+  sel.value = (currentValue && groups.includes(currentValue)) ? currentValue : "";
+}
+
+function handleGroupSelectChange(selectId, inputId){
+  const sel = document.getElementById(selectId);
+  const inp = document.getElementById(inputId);
+  if(sel.value === "__new__"){
+    inp.style.display = "block";
+    inp.value = "";
+    inp.focus();
+  } else {
+    inp.style.display = "none";
+    inp.value = "";
+  }
+}
+
+function resolveGroupValue(selectId, inputId){
+  const sel = document.getElementById(selectId);
+  if(sel.value === "__new__"){
+    return document.getElementById(inputId).value.trim();
+  }
+  return sel.value;
+}
+
+function setListView(mode){
+  listViewMode = mode;
+  renderList();
+}
+
+function buildWordRow(w){
+  const isWeak = state.wrong[w.id] > 0;
+  const isMastered = state.learned[w.id] && !isWeak;
+  let badgeHtml = "";
+  if(isWeak) badgeHtml = '<div class="badge">苦手</div>';
+  else if(isMastered) badgeHtml = '<div class="badge mastered">習得</div>';
+  const sourceHtml = w.source ? `<div class="source">${escapeHtml(w.source)}</div>` : "";
+  const row = document.createElement("div");
+  row.className = "word-row tappable";
+  row.innerHTML = `
+    <div class="info">
+      <div class="en">${escapeHtml(w.en)}</div>
+      <div class="ja">${escapeHtml(w.ja)}</div>
+      ${sourceHtml}
+    </div>
+    ${badgeHtml}
+    <div class="row-actions">
+      <button class="icon-btn" title="発音">🔊</button>
+      <button class="icon-btn edit" title="編集">✏️</button>
+      <button class="icon-btn danger" title="削除">🗑</button>
+    </div>
+  `;
+  const jaEl = row.querySelector(".ja");
+  const speakBtn = row.querySelector(".icon-btn:not(.danger):not(.edit)");
+  const editBtn = row.querySelector(".icon-btn.edit");
+  const deleteBtn = row.querySelector(".icon-btn.danger");
+  row.addEventListener("click", ()=>{ jaEl.classList.toggle("show"); });
+  speakBtn.addEventListener("click", (e)=>{ e.stopPropagation(); speak(w.en); });
+  editBtn.addEventListener("click", (e)=>{ e.stopPropagation(); openEditWord(w.id); });
+  deleteBtn.addEventListener("click", (e)=>{ e.stopPropagation(); deleteWord(w.id); });
+  return row;
+}
+
 function renderList(){
   document.getElementById("listTotal").textContent = state.words.length;
+  document.getElementById("viewFlatBtn").classList.toggle("active", listViewMode === "flat");
+  document.getElementById("viewGroupBtn").classList.toggle("active", listViewMode === "group");
   const body = document.getElementById("listBody");
   body.innerHTML = "";
   if(state.words.length === 0){
@@ -858,38 +975,35 @@ function renderList(){
     body.innerHTML = '<div class="empty-note">「'+escapeHtml(query)+'」に一致する単語がありません。</div>';
     return;
   }
-  filtered.forEach(w=>{
-    const isWeak = state.wrong[w.id] > 0;
-    const isMastered = state.learned[w.id] && !isWeak;
-    let badgeHtml = "";
-    if(isWeak) badgeHtml = '<div class="badge">苦手</div>';
-    else if(isMastered) badgeHtml = '<div class="badge mastered">習得</div>';
-    const sourceHtml = w.source ? `<div class="source">${escapeHtml(w.source)}</div>` : "";
-    const row = document.createElement("div");
-    row.className = "word-row tappable";
-    row.innerHTML = `
-      <div class="info">
-        <div class="en">${escapeHtml(w.en)}</div>
-        <div class="ja">${escapeHtml(w.ja)}</div>
-        ${sourceHtml}
-      </div>
-      ${badgeHtml}
-      <div class="row-actions">
-        <button class="icon-btn" title="発音">🔊</button>
-        <button class="icon-btn edit" title="編集">✏️</button>
-        <button class="icon-btn danger" title="削除">🗑</button>
-      </div>
-    `;
-    const jaEl = row.querySelector(".ja");
-    const speakBtn = row.querySelector(".icon-btn:not(.danger):not(.edit)");
-    const editBtn = row.querySelector(".icon-btn.edit");
-    const deleteBtn = row.querySelector(".icon-btn.danger");
-    row.addEventListener("click", ()=>{ jaEl.classList.toggle("show"); });
-    speakBtn.addEventListener("click", (e)=>{ e.stopPropagation(); speak(w.en); });
-    editBtn.addEventListener("click", (e)=>{ e.stopPropagation(); openEditWord(w.id); });
-    deleteBtn.addEventListener("click", (e)=>{ e.stopPropagation(); deleteWord(w.id); });
-    body.appendChild(row);
-  });
+
+  if(listViewMode === "group"){
+    const groups = {};
+    const ungrouped = [];
+    filtered.forEach(w=>{
+      if(w.group){
+        if(!groups[w.group]) groups[w.group] = [];
+        groups[w.group].push(w);
+      } else {
+        ungrouped.push(w);
+      }
+    });
+    Object.keys(groups).sort((a,b)=>a.localeCompare(b,"ja")).forEach(g=>{
+      const heading = document.createElement("p");
+      heading.className = "group-heading";
+      heading.textContent = g;
+      body.appendChild(heading);
+      groups[g].forEach(w=>body.appendChild(buildWordRow(w)));
+    });
+    if(ungrouped.length){
+      const heading = document.createElement("p");
+      heading.className = "group-heading none";
+      heading.textContent = "グループなし";
+      body.appendChild(heading);
+      ungrouped.forEach(w=>body.appendChild(buildWordRow(w)));
+    }
+  } else {
+    filtered.forEach(w=>body.appendChild(buildWordRow(w)));
+  }
 }
 
 function renderWeakList(){
@@ -981,11 +1095,12 @@ function submitAddWord(){
   const en = document.getElementById("inEn").value.trim();
   const ja = document.getElementById("inJa").value.trim();
   const source = document.getElementById("inSource").value.trim();
+  const group = resolveGroupValue("inGroup", "inNewGroup");
   if(!en || !ja){
     errorEl.textContent = "英単語と意味は必須です。";
     return;
   }
-  state.words.push({ id: genId(), en, ja, ph: "", ex: "", exja: "", source });
+  state.words.push({ id: genId(), en, ja, ph: "", ex: "", exja: "", source, group });
   saveState();
   showScreen("list");
 }
@@ -999,6 +1114,9 @@ function openEditWord(id){
   document.getElementById("inEditEn").value = w.en;
   document.getElementById("inEditJa").value = w.ja;
   document.getElementById("inEditSource").value = w.source || "";
+  populateGroupSelect("inEditGroup", w.group || "");
+  document.getElementById("inEditNewGroup").style.display = "none";
+  document.getElementById("inEditNewGroup").value = "";
   document.getElementById("editFormError").textContent = "";
   showScreen("edit");
 }
@@ -1009,6 +1127,7 @@ function submitEditWord(){
   const en = document.getElementById("inEditEn").value.trim();
   const ja = document.getElementById("inEditJa").value.trim();
   const source = document.getElementById("inEditSource").value.trim();
+  const group = resolveGroupValue("inEditGroup", "inEditNewGroup");
   if(!en || !ja){
     errorEl.textContent = "英単語と意味は必須です。";
     return;
@@ -1018,6 +1137,7 @@ function submitEditWord(){
     w.en = en;
     w.ja = ja;
     w.source = source;
+    w.group = group;
     saveState();
   }
   showScreen("list");
