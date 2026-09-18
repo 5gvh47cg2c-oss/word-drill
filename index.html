@@ -520,7 +520,7 @@ nav button.active{ color: var(--amber); }
       <div class="list-title">単語帳（全<span id="listTotal"></span>語）</div>
       <button class="add-fab" onclick="showScreen('add')">+ 追加</button>
     </div>
-    <input type="text" id="listSearch" class="search-input" placeholder="単語・意味・出典で検索" oninput="renderList()">
+    <input type="text" id="listSearch" class="search-input" placeholder="単語(頭文字)・意味・出典で検索" oninput="renderList()">
     <div class="view-toggle">
       <button id="viewFlatBtn" onclick="setListView('flat')">一覧表示</button>
       <button id="viewGroupBtn" onclick="setListView('group')">グループ表示</button>
@@ -546,7 +546,7 @@ nav button.active{ color: var(--amber); }
     <div class="form-group">
       <label>英単語（必須）</label>
       <div class="form-row">
-        <input type="text" id="inEn" placeholder="例: perseverance">
+        <input type="text" id="inEn" placeholder="例: perseverance" autocapitalize="off" autocorrect="off" spellcheck="false">
         <button class="icon-btn" onclick="speak(document.getElementById('inEn').value)">🔊</button>
       </div>
     </div>
@@ -576,7 +576,7 @@ nav button.active{ color: var(--amber); }
     <div class="form-group">
       <label>英単語（必須）</label>
       <div class="form-row">
-        <input type="text" id="inEditEn" placeholder="例: perseverance">
+        <input type="text" id="inEditEn" placeholder="例: perseverance" autocapitalize="off" autocorrect="off" spellcheck="false">
         <button class="icon-btn" onclick="speak(document.getElementById('inEditEn').value)">🔊</button>
       </div>
     </div>
@@ -966,7 +966,7 @@ function renderList(){
   const query = (document.getElementById("listSearch").value || "").trim().toLowerCase();
   const filtered = query
     ? state.words.filter(w =>
-        w.en.toLowerCase().includes(query) ||
+        w.en.toLowerCase().startsWith(query) ||
         w.ja.toLowerCase().includes(query) ||
         (w.source && w.source.toLowerCase().includes(query))
       )
