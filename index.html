@@ -379,6 +379,7 @@ input[type=text], textarea{
   color: var(--paper);
   font-size:15px;
   font-family:-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+  caret-color: var(--amber);
 }
 textarea{ resize:vertical; min-height:56px; }
 input::placeholder, textarea::placeholder{ color: rgba(251,248,242,0.3); }
@@ -699,7 +700,8 @@ function speak(text){
   try{
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US";
+    const hasJapanese = /[\u3040-\u30FF\u4E00-\u9FFF]/.test(text);
+    u.lang = hasJapanese ? "ja-JP" : "en-US";
     u.rate = 0.95;
     window.speechSynthesis.speak(u);
   }catch(e){ /* ignore */ }
