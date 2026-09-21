@@ -71,9 +71,12 @@ header .streak b{ color: var(--amber); font-weight:700; }
 .screen.active{ display:flex; flex-direction:column; }
 
 #home .lead{
-  font-family:-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+  font-family:'Hiragino Mincho ProN', 'Yu Mincho', serif;
+  font-style:italic;
+  font-weight:700;
   font-size:19px;
   line-height:1.7;
+  min-height:calc(1.7em * 2);
   margin: 6px 0 20px;
   color: var(--paper);
 }
@@ -120,8 +123,12 @@ header .streak b{ color: var(--amber); font-weight:700; }
   font-size:18px;
   flex-shrink:0;
 }
-.menu-card .icon.amber{ background: var(--amber); color:var(--ink); }
+.menu-card .icon.amber-solid{ background: var(--amber); color:var(--ink); font-weight:700; font-size:18px; }
+.menu-card .icon.amber{ background: rgba(226,166,20,0.18); color: var(--amber-deep); }
+.menu-card .icon.danger{ background: rgba(200,90,70,0.15); color: var(--bad); }
 .menu-card .icon.good{ background: rgba(62,142,92,0.15); color:var(--good); }
+.menu-card .icon.muted{ background: rgba(59,66,102,0.12); color: var(--ink-soft); }
+.menu-card .icon.purple{ background: rgba(107,91,149,0.18); color:#6B5B95; }
 .menu-card .body{ flex:1; }
 .menu-card .title{ font-weight:700; font-size:15.5px; }
 .menu-card .desc{ font-size:12.5px; color: var(--ink-soft); margin-top:2px; }
@@ -132,14 +139,13 @@ header .streak b{ color: var(--amber); font-weight:700; }
 .menu-card:active{ transform: scale(0.98); }
 
 .empty-hint{
-  background: rgba(226,166,20,0.08);
-  border:1px solid rgba(226,166,20,0.3);
+  background: var(--paper);
   border-radius:8px;
   padding:16px;
   margin-bottom:18px;
   font-size:13.5px;
   line-height:1.7;
-  color: rgba(251,248,242,0.85);
+  color: var(--ink);
 }
 .empty-hint button{
   margin-top:10px;
@@ -346,10 +352,10 @@ select{
   margin-bottom:8px;
 }
 .word-row .info{ flex:1; min-width:0; }
-.word-row .en{ font-family:-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif; font-style:normal; font-weight:700; font-size:16px; color: var(--ink); }
-.word-row .ja{ font-size:13px; color: var(--ink-soft); margin-top:2px; display:none; }
+.word-row .en{ font-family:-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif; font-style:normal; font-weight:700; font-size:16px; color: var(--ink); word-break:break-word; }
+.word-row .ja{ font-size:13px; color: var(--ink-soft); margin-top:2px; display:none; word-break:break-word; }
 .word-row .ja.show{ display:block; }
-.word-row .source{ font-size:11px; color: rgba(27,35,64,0.45); margin-top:2px; }
+.word-row .source{ font-size:11px; color: rgba(27,35,64,0.45); margin-top:2px; word-break:break-word; }
 .word-row.tappable{ cursor:pointer; }
 .word-row .badge{
   font-size:11px; padding:3px 8px; border-radius:10px; background: rgba(226,166,20,0.18); color: var(--amber-deep); flex-shrink:0;
@@ -367,7 +373,8 @@ select{
 .pencil-icon{ width:21px; height:21px; }
 
 .empty-note{
-  text-align:center; color: rgba(251,248,242,0.5); font-size:13.5px; margin-top:40px; line-height:1.8;
+  text-align:center; color: var(--ink-soft); font-size:13.5px; line-height:1.8;
+  background: var(--paper); border-radius:6px; padding:32px 20px; margin-top:12px;
 }
 
 .form-group{ margin-bottom:16px; }
@@ -414,7 +421,7 @@ nav button{
   display:flex; flex-direction:column; align-items:center; gap:4px;
   font-family:-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
 }
-nav button .ic{ font-size:18px; }
+nav button .ic{ font-size:18px; display:flex; align-items:center; justify-content:center; }
 nav button.active{ color: var(--amber); }
 
 .modal-overlay{
@@ -445,7 +452,7 @@ nav button.active{ color: var(--amber); }
 
   <!-- HOME -->
   <section class="screen active" id="home">
-    <div class="lead">今日も5問、コツコツ積み上げよう。</div>
+    <div class="lead" id="dailyQuote"></div>
 
     <div class="empty-hint" id="emptyHint" style="display:none;">
       収録単語がまだありません。覚えたい英単語を自分で登録するところから始めよう。
@@ -453,38 +460,38 @@ nav button.active{ color: var(--amber); }
     </div>
 
     <div class="menu-card" id="dailyCard" onclick="startQuiz('daily')">
-      <div class="icon amber">5</div>
-      <div class="body"><div class="title">今日の5問</div><div class="desc">タップして答えを確認しながら進める</div></div>
+      <div class="icon amber-solid">5</div>
+      <div class="body"><div class="title">今日の5問</div><div class="desc">タップして答えを確認</div></div>
       <div class="count">›</div>
     </div>
     <div class="menu-card" id="spacedCard" onclick="startQuiz('spaced')">
-      <div class="icon amber">⏰</div>
-      <div class="body"><div class="title">忘却曲線復習</div><div class="desc">今日復習すべき単語を自動で出題</div></div>
+      <div class="icon amber"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="body"><div class="title">忘却曲線復習</div><div class="desc">今日復習すべき単語を出題</div></div>
       <div class="count" id="spacedCount">0</div>
     </div>
     <div class="menu-card" id="allCard" onclick="startQuiz('all')">
-      <div class="icon">⟳</div>
-      <div class="body"><div class="title">通しクイズ</div><div class="desc">登録した単語を全問</div></div>
+      <div class="icon muted"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M4 12a8 8 0 0114-5.3M20 12a8 8 0 01-14 5.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18 4v4h-4M6 20v-4h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="body"><div class="title">通しクイズ</div><div class="desc">登録した単語を全問出題</div></div>
       <div class="count" id="allCount">–</div>
     </div>
     <div class="menu-card" onclick="startQuiz('weak')" id="weakQuizCard">
-      <div class="icon amber">!</div>
-      <div class="body"><div class="title">苦手単語クイズ</div><div class="desc">苦手な単語だけを今すぐ集中復習</div></div>
+      <div class="icon danger"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16.5" r="1" fill="currentColor"/></svg></div>
+      <div class="body"><div class="title">苦手単語クイズ</div><div class="desc">苦手な単語だけを集中復習</div></div>
       <div class="count" id="weakQuizCount">0</div>
     </div>
     <div class="menu-card" onclick="showScreen('weakList')">
-      <div class="icon good">✓</div>
-      <div class="body"><div class="title">苦手単語を管理</div><div class="desc">覚えた単語をリストから外す</div></div>
+      <div class="icon good"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="body"><div class="title">苦手単語を管理</div><div class="desc">覚えた単語をリストから除外</div></div>
       <div class="count" id="weakCount">0</div>
     </div>
-    <div class="menu-card" onclick="showScreen('add')">
-      <div class="icon amber">+</div>
-      <div class="body"><div class="title">単語を追加</div><div class="desc">覚えたい単語を自分で登録</div></div>
+    <div class="menu-card" onclick="showScreen('list')">
+      <div class="icon muted"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11a2 2 0 012 2v14a2 2 0 00-2-2H5.5A1.5 1.5 0 014 16.5v-11z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13a2 2 0 00-2 2v14a2 2 0 012-2h5.5a1.5 1.5 0 001.5-1.5v-11z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></div>
+      <div class="body"><div class="title">単語帳を見る</div><div class="desc">登録した単語を一覧で確認</div></div>
       <div class="count">›</div>
     </div>
-    <div class="menu-card" onclick="showScreen('list')">
-      <div class="icon">📖</div>
-      <div class="body"><div class="title">単語帳を見る</div><div class="desc">登録した単語を一覧で確認</div></div>
+    <div class="menu-card" onclick="showScreen('add')">
+      <div class="icon purple"><svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+      <div class="body"><div class="title">単語を追加</div><div class="desc">覚えたい単語を自分で登録</div></div>
       <div class="count">›</div>
     </div>
   </section>
@@ -603,8 +610,8 @@ nav button.active{ color: var(--amber); }
   </section>
 
   <nav>
-    <button class="active" data-nav="home" onclick="showScreen('home')"><span class="ic">🏠</span>ホーム</button>
-    <button data-nav="list" onclick="showScreen('list')"><span class="ic">📖</span>単語帳</button>
+    <button class="active" data-nav="home" onclick="showScreen('home')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M4 11l8-7 8 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9a1 1 0 001 1h10a1 1 0 001-1v-9" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>ホーム</button>
+    <button data-nav="list" onclick="showScreen('list')"><span class="ic"><svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11a2 2 0 012 2v14a2 2 0 00-2-2H5.5A1.5 1.5 0 014 16.5v-11z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13a2 2 0 00-2 2v14a2 2 0 012-2h5.5a1.5 1.5 0 001.5-1.5v-11z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>単語帳</button>
   </nav>
 
   <div class="modal-overlay" id="modalOverlay">
@@ -630,7 +637,10 @@ let state = {
   totalCorrect: 0,
   totalAnswered: 0,
   lastStudyDate: null,
-  streak: 0
+  streak: 0,
+  quoteOrder: null,
+  quoteCursor: 0,
+  quoteDate: null
 };
 
 const REVIEW_INTERVALS = [1, 3, 7, 14, 30];
@@ -716,12 +726,70 @@ function speakCurrent(){
   if(w) speak(w.en);
 }
 
+const DAILY_QUOTES = [
+  "厚い雲の先にも、合格の光はある。",
+  "一語一語が、実力の礎となる。",
+  "昨日の自分より、少しだけ前へ。",
+  "単語は、未来へ羽ばたくための翼になる。",
+  "続けた者だけが、頂に立てる。",
+  "険しい道の先にこそ、大きな実りがある。",
+  "今の1分が、本番の1点になる。",
+  "地道な積み重ねが、難攻不落の城となる。",
+  "学びの数だけドラマがある。",
+  "継続は力なり。今日も一歩前進。",
+  "知らない単語は、まだ見ぬ味方。",
+  "航路を切り開くのは、単語を極めし者。",
+  "単語は成功への架け橋。",
+  "できなかった単語こそ、今日のチャンス。",
+  "焦らず、でも止まらず。",
+  "準備した者に、本番は味方する。",
+  "積み上げた単語が、合格への虹をかける。",
+  "努力は、才能を超える。",
+  "一つ一つの単語が、未来の扉を開く鍵になる。",
+  "今日の失敗は、明日を照らす灯火。",
+  "流した多くの汗は、やがて真珠となる。",
+  "一つの苦手克服が、未来への切符になる。",
+  "今日という一日を、また一歩前へ。",
+  "単語は己の道を照らす光。",
+  "種をまいた分だけ、花は咲く。",
+  "本番で笑うために、今日は静かに頑張ろう。",
+  "千里の道も、単語一つから。",
+  "今日の努力に、後悔はさせない。",
+  "迷ったら、まず1問。",
+  "一つの単語が、やがて大樹となる。",
+  "迷ったときの羅針盤は、積み重ねた単語たち。"
+];
+
+function renderDailyQuote(){
+  const today = new Date().toISOString().slice(0,10);
+  const allIndexes = DAILY_QUOTES.map((_,i)=>i);
+
+  if(!Array.isArray(state.quoteOrder) || state.quoteOrder.length !== DAILY_QUOTES.length){
+    state.quoteOrder = shuffled(allIndexes);
+    state.quoteCursor = 0;
+    state.quoteDate = today;
+    saveState();
+  } else if(state.quoteDate !== today){
+    state.quoteCursor++;
+    if(state.quoteCursor >= state.quoteOrder.length){
+      state.quoteOrder = shuffled(allIndexes);
+      state.quoteCursor = 0;
+    }
+    state.quoteDate = today;
+    saveState();
+  }
+
+  const idx = state.quoteOrder[state.quoteCursor];
+  document.getElementById("dailyQuote").textContent = DAILY_QUOTES[idx];
+}
+
 function renderHome(){
+  renderDailyQuote();
   const weakIds = state.words.map(w=>w.id).filter(id => state.wrong[id] > 0);
   document.getElementById("weakCount").textContent = weakIds.length;
   document.getElementById("weakQuizCount").textContent = weakIds.length;
   document.getElementById("weakQuizCard").classList.toggle("disabled", weakIds.length===0);
-  document.getElementById("allCount").textContent = state.words.length + "語";
+  document.getElementById("allCount").textContent = state.words.length;
   const dueIds = state.words.map(w=>w.id).filter(id => isDueForReview(id));
   document.getElementById("spacedCount").textContent = dueIds.length;
   document.getElementById("spacedCard").classList.toggle("disabled", dueIds.length===0);
