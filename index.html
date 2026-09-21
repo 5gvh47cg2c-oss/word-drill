@@ -48,7 +48,7 @@ body{
 }
 
 header{
-  padding: calc(22px + env(safe-area-inset-top)) 20px 14px;
+  padding: calc(22px + env(safe-area-inset-top)) 20px 6px;
   display:flex;
   align-items:baseline;
   justify-content:space-between;
@@ -77,8 +77,10 @@ header .streak b{ color: var(--amber); font-weight:700; }
   font-size:19px;
   line-height:1.7;
   min-height:calc(1.7em * 2);
-  margin: 6px 0 20px;
+  margin: 0 0 16px;
   color: var(--paper);
+  display:flex;
+  align-items:center;
 }
 .stat-row{ display:flex; gap:10px; margin-bottom:22px; }
 .stat-box{
