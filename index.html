@@ -653,6 +653,14 @@ function isDueForReview(id){
   return r.nextDate <= todayStr();
 }
 
+function localDateStr(d){
+  d = d || new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return y + "-" + m + "-" + day;
+}
+
 function scheduleNextReview(id, isCorrect){
   if(!state.review) state.review = {};
   const current = state.review[id] || { stage: -1 };
@@ -660,7 +668,7 @@ function scheduleNextReview(id, isCorrect){
   const days = REVIEW_INTERVALS[stage];
   const next = new Date();
   next.setDate(next.getDate() + days);
-  state.review[id] = { stage, nextDate: next.toISOString().slice(0,10) };
+  state.review[id] = { stage, nextDate: localDateStr(next) };
 }
 
 let session = { queue: [], idx: 0, correctCount: 0, mode: "daily", answered: false, revealed: false };
@@ -697,12 +705,12 @@ function saveState(){
   storageSet(STORAGE_KEY, JSON.stringify(state));
 }
 
-function todayStr(){ return new Date().toISOString().slice(0,10); }
+function todayStr(){ return localDateStr(); }
 function bumpStreak(){
   const today = todayStr();
   if(state.lastStudyDate === today) return;
   const y = new Date(); y.setDate(y.getDate()-1);
-  const yesterday = y.toISOString().slice(0,10);
+  const yesterday = localDateStr(y);
   state.streak = (state.lastStudyDate === yesterday) ? state.streak + 1 : 1;
   state.lastStudyDate = today;
 }
@@ -763,7 +771,7 @@ const DAILY_QUOTES = [
 ];
 
 function renderDailyQuote(){
-  const today = new Date().toISOString().slice(0,10);
+  const today = localDateStr();
   const allIndexes = DAILY_QUOTES.map((_,i)=>i);
 
   if(!Array.isArray(state.quoteOrder) || state.quoteOrder.length !== DAILY_QUOTES.length){
