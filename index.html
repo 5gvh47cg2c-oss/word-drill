@@ -560,7 +560,7 @@ nav button.active{ color: var(--amber); }
         <button id="viewFlatBtn" onclick="setListView('flat')">一覧表示</button>
         <button id="viewGroupBtn" onclick="setListView('group')">グループ表示</button>
       </div>
-      <select id="listSort" class="sort-select" onchange="renderList()">
+      <select id="listSort" class="sort-select" onchange="handleSortChange()">
         <option value="old">古い順</option>
         <option value="new">新しい順</option>
       </select>
@@ -679,7 +679,8 @@ let state = {
   streak: 0,
   quoteOrder: null,
   quoteCursor: 0,
-  quoteDate: null
+  quoteDate: null,
+  listSortMode: "old"
 };
 
 const REVIEW_INTERVALS = [1, 3, 7, 14, 30];
@@ -854,7 +855,7 @@ function showScreen(name){
   const navBtn = document.querySelector('nav button[data-nav="'+name+'"]');
   if(navBtn) navBtn.classList.add("active");
   if(name === "home") renderHome();
-  if(name === "list"){ document.getElementById("listSearch").value = ""; document.getElementById("listSort").value = "old"; listViewMode = "flat"; renderList(); }
+  if(name === "list"){ document.getElementById("listSearch").value = ""; document.getElementById("listSort").value = state.listSortMode || "old"; listViewMode = "flat"; renderList(); }
   if(name === "weakList") renderWeakList();
   if(name === "add"){
     document.getElementById("inEn").value = "";
@@ -1072,6 +1073,12 @@ function setListView(mode){
   renderList();
 }
 
+function handleSortChange(){
+  state.listSortMode = document.getElementById("listSort").value;
+  saveState();
+  renderList();
+}
+
 function buildWordRow(w){
   const isWeak = state.wrong[w.id] > 0;
   const isMastered = state.learned[w.id] && !isWeak;
@@ -1127,7 +1134,7 @@ function renderList(){
     body.innerHTML = '<div class="empty-note">「'+escapeHtml(query)+'」に一致する単語がありません。</div>';
     return;
   }
-  const sortMode = document.getElementById("listSort").value;
+  const sortMode = state.listSortMode;
   const sorted = sortMode === "new" ? filtered.slice().reverse() : filtered;
 
   if(listViewMode === "group"){
