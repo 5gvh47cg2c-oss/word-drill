@@ -323,8 +323,20 @@ header .streak b{ color: var(--amber); font-weight:700; }
   font-family:-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
 }
 .view-toggle button.active{ background: var(--amber); color: var(--ink); }
-.group-heading{ font-size:12px; color: var(--amber); font-weight:700; margin:0 0 8px; }
+.group-heading{ font-size:12px; color: var(--amber); font-weight:700; margin:0 0 8px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
 .group-heading.none{ color: rgba(251,248,242,0.4); }
+.group-name{
+  display:flex; align-items:center; gap:5px;
+  background: rgba(226,166,20,0.15); border-radius:14px; padding:5px 10px;
+  color: var(--amber-deep); min-width:0;
+}
+.group-name span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.group-edit-btn{
+  background: rgba(226,166,20,0.15); border:none; border-radius:14px; padding:5px 10px; cursor:pointer;
+  display:flex; align-items:center; gap:5px; flex-shrink:0;
+}
+.group-edit-btn .pencil-icon{ width:14px; height:14px; }
+.group-edit-btn span{ font-size:11px; font-weight:700; color: var(--amber-deep); }
 select{
   width:100%;
   padding:12px 14px;
@@ -336,6 +348,13 @@ select{
   font-family:-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
 }
 .new-group-input{ margin-top:8px; }
+.sort-select{
+  width:auto;
+  padding:8px 10px;
+  border-radius:16px;
+  font-size:12px;
+  flex-shrink:0;
+}
 .back-btn{
   background:none; border:none; color: var(--paper); font-size:20px; cursor:pointer; padding:4px 6px 4px 0;
 }
@@ -443,6 +462,7 @@ nav button.active{ color: var(--amber); }
 }
 .modal-actions .cancel{ background: var(--paper-dim); color: var(--ink); }
 .modal-actions .confirm{ background: var(--bad); color:#fff; }
+.modal-actions .confirm.rename{ background: var(--amber); color: var(--ink); }
 </style>
 </head>
 <body>
@@ -535,9 +555,15 @@ nav button.active{ color: var(--amber); }
       <button class="add-fab" onclick="showScreen('add')">+ 追加</button>
     </div>
     <input type="text" id="listSearch" class="search-input" placeholder="単語(頭文字)・意味・出典で検索" oninput="renderList()">
-    <div class="view-toggle">
-      <button id="viewFlatBtn" onclick="setListView('flat')">一覧表示</button>
-      <button id="viewGroupBtn" onclick="setListView('group')">グループ表示</button>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px;">
+      <div class="view-toggle" style="margin-bottom:0;">
+        <button id="viewFlatBtn" onclick="setListView('flat')">一覧表示</button>
+        <button id="viewGroupBtn" onclick="setListView('group')">グループ表示</button>
+      </div>
+      <select id="listSort" class="sort-select" onchange="renderList()">
+        <option value="old">古い順</option>
+        <option value="new">新しい順</option>
+      </select>
     </div>
     <div id="listBody"></div>
   </section>
@@ -622,6 +648,17 @@ nav button.active{ color: var(--amber); }
       <div class="modal-actions">
         <button class="cancel" id="modalCancelBtn">キャンセル</button>
         <button class="confirm" id="modalConfirmBtn">削除する</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="renameModalOverlay">
+    <div class="modal-box">
+      <div class="modal-msg" id="renameModalMsg">グループ名を変更</div>
+      <input type="text" id="renameGroupInput" style="margin-bottom:16px;">
+      <div class="modal-actions">
+        <button class="cancel" id="renameCancelBtn">キャンセル</button>
+        <button class="confirm rename" id="renameSaveBtn">保存する</button>
       </div>
     </div>
   </div>
@@ -817,7 +854,7 @@ function showScreen(name){
   const navBtn = document.querySelector('nav button[data-nav="'+name+'"]');
   if(navBtn) navBtn.classList.add("active");
   if(name === "home") renderHome();
-  if(name === "list"){ document.getElementById("listSearch").value = ""; listViewMode = "flat"; renderList(); }
+  if(name === "list"){ document.getElementById("listSearch").value = ""; document.getElementById("listSort").value = "old"; listViewMode = "flat"; renderList(); }
   if(name === "weakList") renderWeakList();
   if(name === "add"){
     document.getElementById("inEn").value = "";
@@ -1059,11 +1096,13 @@ function renderList(){
     body.innerHTML = '<div class="empty-note">「'+escapeHtml(query)+'」に一致する単語がありません。</div>';
     return;
   }
+  const sortMode = document.getElementById("listSort").value;
+  const sorted = sortMode === "new" ? filtered.slice().reverse() : filtered;
 
   if(listViewMode === "group"){
     const groups = {};
     const ungrouped = [];
-    filtered.forEach(w=>{
+    sorted.forEach(w=>{
       if(w.group){
         if(!groups[w.group]) groups[w.group] = [];
         groups[w.group].push(w);
@@ -1072,9 +1111,10 @@ function renderList(){
       }
     });
     Object.keys(groups).sort((a,b)=>a.localeCompare(b,"ja")).forEach(g=>{
-      const heading = document.createElement("p");
+      const heading = document.createElement("div");
       heading.className = "group-heading";
-      heading.textContent = g;
+      heading.innerHTML = `<span class="group-name">${TAG_SVG}<span>${escapeHtml(g)}</span></span><button class="group-edit-btn" title="グループ名を変更">${PENCIL_SVG}<span>グループ名変更</span></button>`;
+      heading.querySelector(".group-edit-btn").addEventListener("click", ()=>openRenameGroupModal(g));
       body.appendChild(heading);
       groups[g].forEach(w=>body.appendChild(buildWordRow(w)));
     });
@@ -1086,7 +1126,7 @@ function renderList(){
       ungrouped.forEach(w=>body.appendChild(buildWordRow(w)));
     }
   } else {
-    filtered.forEach(w=>body.appendChild(buildWordRow(w)));
+    sorted.forEach(w=>body.appendChild(buildWordRow(w)));
   }
 }
 
@@ -1152,6 +1192,36 @@ function showConfirm(message, onConfirm){
   cancelBtn.addEventListener("click", onCancelClick);
 }
 
+function openRenameGroupModal(oldName){
+  const overlay = document.getElementById("renameModalOverlay");
+  const input = document.getElementById("renameGroupInput");
+  document.getElementById("renameModalMsg").textContent = "「" + oldName + "」の名前を変更";
+  input.value = oldName;
+  overlay.classList.add("show");
+  input.focus();
+
+  const saveBtn = document.getElementById("renameSaveBtn");
+  const cancelBtn = document.getElementById("renameCancelBtn");
+  function cleanup(){
+    overlay.classList.remove("show");
+    saveBtn.removeEventListener("click", onSaveClick);
+    cancelBtn.removeEventListener("click", onCancelClick);
+  }
+  function onSaveClick(){
+    const newName = input.value.trim();
+    cleanup();
+    if(!newName || newName === oldName) return;
+    state.words.forEach(w=>{
+      if(w.group === oldName) w.group = newName;
+    });
+    saveState();
+    renderList();
+  }
+  function onCancelClick(){ cleanup(); }
+  saveBtn.addEventListener("click", onSaveClick);
+  cancelBtn.addEventListener("click", onCancelClick);
+}
+
 function deleteWord(id){
   const w = wordById(id);
   const name = w ? w.en : "この単語";
@@ -1178,6 +1248,8 @@ const SPEAKER_SVG = '<svg viewBox="0 0 24 24" fill="none" width="19" height="19"
 const TRASH_SVG = '<svg viewBox="0 0 24 24" fill="none" width="19" height="19"><path d="M5 7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 7V4.5a1 1 0 011-1h4a1 1 0 011 1V7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6.5 7l1 12.5a1 1 0 001 1h7a1 1 0 001-1L17.5 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 
 const PENCIL_SVG = '<svg class="pencil-icon" viewBox="0 0 100 100"><g transform="rotate(-45 50 50)" stroke="#FBF3E0" stroke-width="3" stroke-linejoin="round"><rect x="6" y="33" width="9" height="34" fill="#7A5C0B"/><rect x="15" y="33" width="57" height="34" fill="#B8860F"/><polygon points="72,33 72,67 97,50" fill="#B8860F"/><line x1="87.5" y1="41" x2="87.5" y2="59"/></g></svg>';
+
+const TAG_SVG = '<svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M3 7a1 1 0 011-1h4.5l2 2H19a1 1 0 011 1v9a1 1 0 01-1 1H4a1 1 0 01-1-1V7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
 
 function submitAddWord(){
   const errorEl = document.getElementById("formError");
