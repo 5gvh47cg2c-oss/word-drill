@@ -920,6 +920,7 @@ function renderQuestion(){
   document.getElementById("quizPhonetic").innerHTML = renderPhoneticHtml(word.ph);
   document.getElementById("quizMeaning").classList.remove("show");
   document.getElementById("quizMeaning").textContent = "";
+  document.getElementById("tapHint").textContent = "タップして答えを見る";
   document.getElementById("tapHint").style.display = "block";
 
   document.getElementById("exampleBox").classList.remove("show");
@@ -954,6 +955,15 @@ function flashcardResult(correctId, isCorrect){
   if(session.answered) return;
   session.answered = true;
 
+  session.preAnswerSnapshot = {
+    totalAnswered: state.totalAnswered,
+    totalCorrect: state.totalCorrect,
+    correctCount: session.correctCount,
+    wrongCount: state.wrong[correctId] || 0,
+    learned: !!state.learned[correctId],
+    review: state.review[correctId] ? Object.assign({}, state.review[correctId]) : null
+  };
+
   const card = document.getElementById("quizCard");
   card.classList.add(isCorrect ? "correct" : "wrong");
   document.querySelectorAll(".flash-btn").forEach(b=>b.disabled = true);
@@ -971,7 +981,28 @@ function flashcardResult(correctId, isCorrect){
 
   document.getElementById("nextBtn").classList.add("show");
   document.getElementById("nextBtn").textContent = (session.idx+1 < session.queue.length) ? "次へ" : "結果を見る";
+
+  const tapHint = document.getElementById("tapHint");
+  tapHint.textContent = "タップしてやり直す";
+  tapHint.style.display = "block";
+  card.onclick = ()=>{
+    showConfirm("この問題をやり直しますか？", ()=>redoCurrentQuestion(correctId), "やり直す");
+  };
+
   saveState();
+}
+
+function redoCurrentQuestion(wId){
+  const snap = session.preAnswerSnapshot;
+  if(!snap) return;
+  state.totalAnswered = snap.totalAnswered;
+  state.totalCorrect = snap.totalCorrect;
+  session.correctCount = snap.correctCount;
+  if(snap.wrongCount > 0) state.wrong[wId] = snap.wrongCount; else delete state.wrong[wId];
+  if(snap.learned) state.learned[wId] = true; else delete state.learned[wId];
+  if(snap.review) state.review[wId] = snap.review; else delete state.review[wId];
+  saveState();
+  renderQuestion();
 }
 
 function nextQuestion(){
@@ -1161,7 +1192,7 @@ function renderWeakList(){
     speakBtn.addEventListener("click", (e)=>{ e.stopPropagation(); speak(w.en); });
     masterBtn.addEventListener("click", (e)=>{
       e.stopPropagation();
-      showConfirm(w.en + " を苦手リストから外しますか？（単語帳には残ります）", ()=>masterWord(w.id));
+      showConfirm(w.en + " を苦手リストから外しますか？（単語帳には残ります）", ()=>masterWord(w.id), "外す");
     });
     body.appendChild(row);
   });
@@ -1175,12 +1206,13 @@ function masterWord(id){
   renderHome();
 }
 
-function showConfirm(message, onConfirm){
+function showConfirm(message, onConfirm, confirmLabel){
   const overlay = document.getElementById("modalOverlay");
   document.getElementById("modalMsg").textContent = message;
   overlay.classList.add("show");
   const confirmBtn = document.getElementById("modalConfirmBtn");
   const cancelBtn = document.getElementById("modalCancelBtn");
+  confirmBtn.textContent = confirmLabel || "削除する";
   function cleanup(){
     overlay.classList.remove("show");
     confirmBtn.removeEventListener("click", onConfirmClick);
